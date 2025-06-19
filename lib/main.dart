@@ -81,20 +81,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
 
     try {
       print("1️⃣ 檢查定位服務");
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         print("❌ 定位服務沒開");
         return;
       }
 
       print("2️⃣ 檢查定位權限");
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.deniedForever) {
           print("❌ 使用者永久拒絕定位權限");
           return;
-        }
+    }
       }
 
       print("3️⃣ 開始抓位置");
@@ -103,14 +103,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
         timeLimit: const Duration(seconds: 5),
       );
       print("📍 現在位置：${position.latitude}, ${position.longitude}");
-      double centerLat = position.latitude;
-      double centerLng = position.longitude;
-      double radius = radiusKm * 1000;
+    double centerLat = position.latitude;
+    double centerLng = position.longitude;
+    double radius = radiusKm * 1000;
       int points = (radiusKm * 8).ceil();
       print("🔍 搜尋點數：$points 個點");
-      double earthRadius = 6378137;
-      Set<String> seen = {};
-      List<Map<String, String>> allRestaurants = [];
+    double earthRadius = 6378137;
+    Set<String> seen = {};
+    List<Map<String, String>> allRestaurants = [];
 
       // 使用 Future.wait 並行處理多個請求
       List<Future<void>> searchFutures = [];
@@ -122,14 +122,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
       searchFutures.add(_searchRestaurants(centerUrl, centerLat, centerLng, seen, allRestaurants));
 
       // 圓周點搜尋
-      for (int i = 0; i < points; i++) {
-        double angle = 2 * pi * i / points;
-        double dx = radius * cos(angle);
-        double dy = radius * sin(angle);
-        double deltaLat = dy / earthRadius * (180 / pi);
-        double deltaLng = dx / (earthRadius * cos(pi * centerLat / 180)) * (180 / pi);
-        double newLat = centerLat + deltaLat;
-        double newLng = centerLng + deltaLng;
+    for (int i = 0; i < points; i++) {
+      double angle = 2 * pi * i / points;
+      double dx = radius * cos(angle);
+      double dy = radius * sin(angle);
+      double deltaLat = dy / earthRadius * (180 / pi);
+      double deltaLng = dx / (earthRadius * cos(pi * centerLat / 180)) * (180 / pi);
+      double newLat = centerLat + deltaLat;
+      double newLng = centerLng + deltaLng;
 
         double searchRadius = min(1500.0, radius / 2);
         String url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
@@ -258,13 +258,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
           if (!seen.contains(uniqueId)) {
             seen.add(uniqueId);
 
-            final photoReferences = item['photos'] != null && item['photos'].isNotEmpty
-                ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
-                : <String>[];
+          final photoReferences = item['photos'] != null && item['photos'].isNotEmpty
+              ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
+              : <String>[];
 
-            final photoUrl = photoReferences.isNotEmpty
-                ? 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReferences[0]}&key=$apiKey'
-                : 'https://via.placeholder.com/400x300.png?text=No+Image';
+          final photoUrl = photoReferences.isNotEmpty
+              ? 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReferences[0]}&key=$apiKey'
+              : 'https://via.placeholder.com/400x300.png?text=No+Image';
 
             double distance = 0;
             if (lat.isNotEmpty && lng.isNotEmpty) {
@@ -596,114 +596,152 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 '目前定位：$currentLat, $currentLng',
-                style: const TextStyle(fontSize: 16, color: Colors.blueGrey),
+                style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
               ),
             ),
           Expanded(
             child: currentRoundList.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : CardSwiper(
-                    key: ValueKey(cardSwiperKey),
-                    cardsCount: currentRoundList.length,
-                    onSwipe: handleSwipe,
-                    cardBuilder: (context, index) {
-                      final restaurant = currentRoundList[index];
-                      double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
-                      String distanceText = dist >= 1000
-                          ? '距離你約 ${(dist / 1000).toStringAsFixed(1)} 公里'
-                          : '距離你約 ${dist.toStringAsFixed(0)} 公尺';
+                        key: ValueKey(cardSwiperKey),
+                        cardsCount: currentRoundList.length,
+                        onSwipe: handleSwipe,
+                        cardBuilder: (context, index) {
+                          final restaurant = currentRoundList[index];
+                          double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+                          String distanceText = dist >= 1000
+                              ? '距離你約 ${(dist / 1000).toStringAsFixed(1)} 公里'
+                              : '距離你約 ${dist.toStringAsFixed(0)} 公尺';
 
-                      List typesList = [];
-                      if (restaurant['types'] != null) {
-                        try {
-                          typesList = json.decode(restaurant['types']!);
-                        } catch (_) {}
-                      }
-                      final String typeText = classifyRestaurant(typesList);
-                      final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
-                      final String openStatus = getOpenStatus(restaurant);
+                          List typesList = [];
+                          if (restaurant['types'] != null) {
+                            try {
+                              typesList = json.decode(restaurant['types']!);
+                            } catch (_) {}
+                          }
+                          final String typeText = classifyRestaurant(typesList);
+                          final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+                          final String openStatus = getOpenStatus(restaurant);
 
-                      return SingleChildScrollView(
-                        child: Card(
-                          elevation: 8,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: Image.network(
-                                    restaurant['image'] ?? '',
-                                    height: 220,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
+                          return SingleChildScrollView(
+                            child: Card(
+                              elevation: 10,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(18),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(18),
+                                          child: Image.network(
+                                            restaurant['image'] ?? '',
+                                            height: 220,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 16,
+                                          bottom: 16,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(0.5),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  restaurant['name'] ?? '未知餐廳',
+                                                  style: const TextStyle(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  openStatus,
+                                                  style: const TextStyle(fontSize: 18),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 18),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.star, color: Colors.amber, size: 20),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          ratingText,
+                                          style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                        ),
+                                        const SizedBox(width: 18),
+                                        const Icon(Icons.place, color: Colors.blueGrey, size: 20),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          dist >= 1000
+                                            ? '${(dist / 1000).toStringAsFixed(1)} 公里'
+                                            : '${dist.toStringAsFixed(0)} 公尺',
+                                          style: const TextStyle(fontSize: 16, color: Colors.black54),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      typeText,
+                                      style: const TextStyle(fontSize: 15, color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            favorites.contains(restaurant['name'])
+                                                ? Icons.star
+                                                : Icons.star_border,
+                                            color: Colors.amber,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              String name = restaurant['name'] ?? '';
+                                              if (favorites.contains(name)) {
+                                                favorites.remove(name);
+                                              } else {
+                                                favorites.add(name);
+                                              }
+                                              saveFavorites();
+                                            });
+                                          },
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(Icons.navigation, color: Colors.deepPurple),
+                                          onPressed: () {
+                                            openMap(
+                                              restaurant['lat'] ?? '',
+                                              restaurant['lng'] ?? '',
+                                              restaurant['name'] ?? '',
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  restaurant['name'] ?? '未知餐廳',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  '評分：$ratingText 顆星',
-                                  style: const TextStyle(fontSize: 16, color: Colors.green),
-                                ),
-                                Text(
-                                  distanceText,
-                                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                                ),
-                                Text(
-                                  '類型：$typeText',
-                                  style: const TextStyle(fontSize: 16, color: Colors.orange),
-                                ),
-                                Text(
-                                  '目前狀態：$openStatus',
-                                  style: const TextStyle(fontSize: 16, color: Colors.blue),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    favorites.contains(restaurant['name'])
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: Colors.amber,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      String name = restaurant['name'] ?? '';
-                                      if (favorites.contains(name)) {
-                                        favorites.remove(name);
-                                      } else {
-                                        favorites.add(name);
-                                      }
-                                      saveFavorites();
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    openMap(
-                                      restaurant['lat'] ?? '',
-                                      restaurant['lng'] ?? '',
-                                      restaurant['name'] ?? '',
-                                    );
-                                  },
-                                  child: const Text("導航"),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
+                          );
+                        },
                   ),
           ),
         ],
@@ -713,11 +751,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
 
   String getOpenStatus(Map<String, String> restaurant) {
     if (restaurant['open_now'] == 'true') {
-      return '營業中 🟢';
+      return '🟢';
     } else if (restaurant['open_now'] == 'false') {
-      return '休息中 🔴';
+      return '🔴';
     } else {
-      return '未知狀態 ⚪';
+      return '⚪';
     }
   }
 
