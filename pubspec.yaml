@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  geolocator: ^11.0.0
+  geolocator: ^9.0.2
   http: ^0.13.6
   flutter_card_swiper: ^3.1.0
   flutter_dotenv: ^5.2.1
@@ -19,6 +19,7 @@ dependencies:
   shared_preferences: ^2.2.2
   story_view: ^0.14.0
   cached_network_image: ^3.3.1
+  carousel_slider: ^4.2.1
 
 dev_dependencies:
   flutter_test:

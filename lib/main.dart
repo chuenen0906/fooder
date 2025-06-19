@@ -53,6 +53,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
   bool isLoading = false;
   bool hasMore = true;
   bool showLocation = false;
+  Map<int, int> photoPageIndex = {}; // key: 卡片index, value: 圖片index
 
   @override
   void initState() {
@@ -141,6 +142,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
 
       // 等待所有搜尋完成
       await Future.wait(searchFutures);
+
+      // 取得每家餐廳的 place_id 並補抓多張圖片
+      List<Future<void>> photoFutures = [];
+      for (var restaurant in allRestaurants) {
+        final placeId = restaurant['place_id'];
+        if (placeId != null && placeId.isNotEmpty) {
+          photoFutures.add(fetchRestaurantPhotos(placeId).then((urls) {
+            restaurant['photo_urls'] = json.encode(urls);
+          }));
+        } else {
+          restaurant['photo_urls'] = json.encode(['https://via.placeholder.com/400x300.png?text=No+Image']);
+        }
+      }
+      await Future.wait(photoFutures);
 
       // 處理結果
       print("for 迴圈結束，allRestaurants 總數: ${allRestaurants.length}");
@@ -254,6 +269,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
           final name = item['name'] ?? '';
           final lat = item['geometry']?['location']?['lat']?.toString() ?? '';
           final lng = item['geometry']?['location']?['lng']?.toString() ?? '';
+          final placeId = item['place_id'] ?? '';
           String uniqueId = '$name-$lat-$lng';
           
           if (!seen.contains(uniqueId)) {
@@ -325,7 +341,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
               'rating': item['rating']?.toString() ?? '',
               'open_now': openNow,
               'photo_references': json.encode(photoReferences),
-              'is_fast_food': isFastFood.toString(), // 添加速食標記
+              'is_fast_food': isFastFood.toString(),
+              'place_id': placeId,
+              'photo_urls': json.encode([]),
             });
           }
         }
@@ -682,41 +700,123 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
             child: currentRoundList.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : CardSwiper(
-                        key: ValueKey(cardSwiperKey),
-                        cardsCount: currentRoundList.length,
-                        onSwipe: handleSwipe,
-                        cardBuilder: (context, index) {
-                          final restaurant = currentRoundList[index];
-                          double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
-                          List typesList = [];
-                          if (restaurant['types'] != null) {
-                            try {
-                              typesList = json.decode(restaurant['types']!);
-                            } catch (_) {}
-                          }
+                    key: ValueKey(cardSwiperKey),
+                    cardsCount: currentRoundList.length,
+                    onSwipe: handleSwipe,
+                    cardBuilder: (context, index) {
+                      final restaurant = currentRoundList[index];
+                      double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+                      List typesList = [];
+                      if (restaurant['types'] != null) {
+                        try {
+                          typesList = json.decode(restaurant['types']!);
+                        } catch (_) {}
+                      }
                       final String typeText = classifyRestaurant(typesList, restaurant);
-                          final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
-                          final String openStatus = getOpenStatus(restaurant);
-                      // 多圖 IG 限動式圖片
-                      List photoRefsRaw = json.decode(restaurant['photo_references']!);
-                      List<String> photoRefs = photoRefsRaw.map((e) => e.toString()).toList();
-                      List<String> photoUrls = photoRefs.isNotEmpty
-                          ? photoRefs.map((ref) => 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey').toList()
-                          : ['https://via.placeholder.com/400x300.png?text=No+Image'];
+                      final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+                      final String openStatus = getOpenStatus(restaurant);
+                      // 多圖輪播
+                      List<String> photoUrls = [];
+                      if (restaurant['photo_urls'] != null) {
+                        try {
+                          photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+                        } catch (_) {}
+                      }
+                      if (photoUrls.isEmpty) {
+                        photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
+                      }
+                      int currentPhotoIndex = photoPageIndex[index] ?? 0;
                       return Card(
                         elevation: 10,
-                              shape: RoundedRectangleBorder(
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Padding(
+                        ),
+                        child: Padding(
                           padding: const EdgeInsets.all(18),
-                                child: Column(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                height: 200,
+                                child: Stack(
                                   children: [
-                              _RestaurantPhotoStoryView(
-                                photoUrls: photoUrls,
-                                restaurantName: restaurant['name'] ?? '未知餐廳',
-                                openStatus: openStatus,
+                                    PageView.builder(
+                                      itemCount: photoUrls.length,
+                                      controller: PageController(initialPage: currentPhotoIndex),
+                                      onPageChanged: (idx) {
+                                        setState(() {
+                                          photoPageIndex[index] = idx;
+                                        });
+                                      },
+                                      itemBuilder: (context, idx) {
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(18),
+                                          child: CachedNetworkImage(
+                                            imageUrl: photoUrls[idx],
+                                            height: 200,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
+                                            errorWidget: (context, url, error) => Container(
+                                              color: Colors.grey[200],
+                                              height: 200,
+                                              child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    // 指示條
+                                    if (photoUrls.length > 1)
+                                      Positioned(
+                                        bottom: 10,
+                                        left: 0,
+                                        right: 0,
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: List.generate(photoUrls.length, (dotIdx) => Container(
+                                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: currentPhotoIndex == dotIdx ? Colors.white : Colors.white54,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.black12),
+                                            ),
+                                          )),
+                                        ),
+                                      ),
+                                    // 餐廳名稱與營業狀態
+                                    Positioned(
+                                      left: 16,
+                                      bottom: 16,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              restaurant['name'] ?? '未知餐廳',
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              openStatus,
+                                              style: const TextStyle(fontSize: 18, color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 18),
                               Row(
@@ -726,64 +826,64 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
                                   Text(
                                     ratingText,
                                     style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                    ),
+                                  ),
                                   const SizedBox(width: 18),
                                   const Icon(Icons.place, color: Colors.blueGrey, size: 20),
                                   const SizedBox(width: 4),
-                                    Text(
+                                  Text(
                                     dist >= 1000
                                         ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
                                         : '${dist.toStringAsFixed(0)} 公尺',
                                     style: const TextStyle(fontSize: 16, color: Colors.black54),
-                                      ),
+                                  ),
                                 ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
                                 typeText,
                                 style: const TextStyle(fontSize: 15, color: Colors.grey),
-                                    ),
+                              ),
                               const SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        favorites.contains(restaurant['name'])
-                                            ? Icons.star
-                                            : Icons.star_border,
-                                        color: Colors.amber,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          String name = restaurant['name'] ?? '';
-                                          if (favorites.contains(name)) {
-                                            favorites.remove(name);
-                                          } else {
-                                            favorites.add(name);
-                                          }
-                                          saveFavorites();
-                                        });
-                                      },
+                                  IconButton(
+                                    icon: Icon(
+                                      favorites.contains(restaurant['name'])
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: Colors.amber,
                                     ),
+                                    onPressed: () {
+                                      setState(() {
+                                        String name = restaurant['name'] ?? '';
+                                        if (favorites.contains(name)) {
+                                          favorites.remove(name);
+                                        } else {
+                                          favorites.add(name);
+                                        }
+                                        saveFavorites();
+                                      });
+                                    },
+                                  ),
                                   const SizedBox(width: 8),
                                   IconButton(
                                     icon: const Icon(Icons.navigation, color: Colors.deepPurple),
-                                      onPressed: () {
-                                        openMap(
-                                          restaurant['lat'] ?? '',
-                                          restaurant['lng'] ?? '',
-                                          restaurant['name'] ?? '',
-                                        );
-                                      },
+                                    onPressed: () {
+                                      openMap(
+                                        restaurant['lat'] ?? '',
+                                        restaurant['lng'] ?? '',
+                                        restaurant['name'] ?? '',
+                                      );
+                                    },
                                   ),
                                 ],
-                                    ),
-                                  ],
                               ),
-                            ),
-                          );
-                        },
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
           ),
         ],
@@ -809,138 +909,24 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
       throw 'Could not launch $url';
     }
   }
+
+  Future<List<String>> fetchRestaurantPhotos(String placeId) async {
+    final detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=photos&key=$apiKey&language=zh-TW';
+    try {
+      final response = await http.get(Uri.parse(detailsUrl)).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List photos = data['result']?['photos'] ?? [];
+        final List<String> photoRefs = photos.take(5).map<String>((p) => p['photo_reference'] as String).toList();
+        return photoRefs.map((ref) => 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey').toList();
+      }
+    } catch (e) {
+      print('取得 details API 圖片失敗: $e');
+    }
+    return ['https://via.placeholder.com/400x300.png?text=No+Image'];
+  }
 }
 
 double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
   return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
-}
-
-// IG 限動式多圖圖片元件
-class _RestaurantPhotoStoryView extends StatefulWidget {
-  final List<String> photoUrls;
-  final String restaurantName;
-  final String openStatus;
-
-  const _RestaurantPhotoStoryView({
-    required this.photoUrls,
-    required this.restaurantName,
-    required this.openStatus,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  State<_RestaurantPhotoStoryView> createState() => _RestaurantPhotoStoryViewState();
-}
-
-class _RestaurantPhotoStoryViewState extends State<_RestaurantPhotoStoryView> {
-  late PageController _controller;
-  int _currentPhotoIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = PageController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        SizedBox(
-          height: 220,
-          child: GestureDetector(
-            onTapUp: (details) {
-              final box = context.findRenderObject() as RenderBox;
-              final local = box.globalToLocal(details.globalPosition);
-              final width = box.size.width;
-              setState(() {
-                if (local.dx < width / 2 && _currentPhotoIndex > 0) {
-                  _currentPhotoIndex--;
-                  _controller.animateToPage(_currentPhotoIndex, duration: Duration(milliseconds: 200), curve: Curves.easeInOut);
-                } else if (local.dx >= width / 2 && _currentPhotoIndex < widget.photoUrls.length - 1) {
-                  _currentPhotoIndex++;
-                  _controller.animateToPage(_currentPhotoIndex, duration: Duration(milliseconds: 200), curve: Curves.easeInOut);
-                }
-              });
-            },
-            child: Stack(
-              children: [
-                PageView.builder(
-                  controller: _controller,
-                  itemCount: widget.photoUrls.length,
-                  onPageChanged: (idx) => setState(() => _currentPhotoIndex = idx),
-                  itemBuilder: (context, idx) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
-                      child: Image.network(
-                        widget.photoUrls[idx],
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  },
-                ),
-                // 進度條
-                Positioned(
-                  top: 10,
-                  left: 16,
-                  right: 16,
-                  child: Row(
-                    children: List.generate(widget.photoUrls.length, (idx) =>
-                      Expanded(
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 2),
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: idx <= _currentPhotoIndex ? Colors.white : Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // 餐廳名稱與狀態燈
-                Positioned(
-                  left: 16,
-                  bottom: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          widget.restaurantName,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          widget.openStatus,
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
