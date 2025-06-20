@@ -36,7 +36,7 @@ class NearbyFoodSwipePage extends StatefulWidget {
   State<NearbyFoodSwipePage> createState() => _NearbyFoodSwipePageState();
 }
 
-class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
+class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
   final String apiKey = 'YOUR_API_KEY_HERE';
   List<Map<String, String>> fullRestaurantList = [];
   List<Map<String, String>> currentRoundList = [];
@@ -55,11 +55,56 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
   bool showLocation = false;
   Map<int, int> photoPageIndex = {}; // key: 卡片index, value: 圖片index
 
+  // 滑動提示文字動畫相關變數
+  late AnimationController _swipeAnimationController;
+  late Animation<double> _swipeOpacityAnimation;
+  late Animation<Offset> _swipePositionAnimation;
+  late Animation<double> _swipeScaleAnimation;
+  bool _showSwipeHint = false;
+  String _swipeHintText = '';
+  Color _swipeHintColor = Colors.red;
+
   @override
   void initState() {
     super.initState();
     loadFavorites();
     fetchAllRestaurants(radiusKm: searchRadius);
+    
+    // 初始化滑動提示文字動畫控制器
+    _swipeAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _swipeOpacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _swipeAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _swipePositionAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _swipeAnimationController,
+      curve: Curves.easeOutBack,
+    ));
+    
+    _swipeScaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _swipeAnimationController,
+      curve: Curves.easeOutBack,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _swipeAnimationController.dispose();
+    super.dispose();
   }
 
   Future<void> loadFavorites() async {
@@ -699,191 +744,247 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
           Expanded(
             child: currentRoundList.isEmpty
                 ? const Center(child: CircularProgressIndicator())
-                : CardSwiper(
-                    key: ValueKey(cardSwiperKey),
-                    cardsCount: currentRoundList.length,
-                    onSwipe: handleSwipe,
-                    cardBuilder: (context, index) {
-                      final restaurant = currentRoundList[index];
-                      double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
-                      List typesList = [];
-                      if (restaurant['types'] != null) {
-                        try {
-                          typesList = json.decode(restaurant['types']!);
-                        } catch (_) {}
-                      }
-                      final String typeText = classifyRestaurant(typesList, restaurant);
-                      final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
-                      final String openStatus = getOpenStatus(restaurant);
-                      // 多圖輪播
-                      List<String> photoUrls = [];
-                      if (restaurant['photo_urls'] != null) {
-                        try {
-                          photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
-                        } catch (_) {}
-                      }
-                      if (photoUrls.isEmpty) {
-                        photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
-                      }
-                      int currentPhotoIndex = photoPageIndex[index] ?? 0;
-                      return Card(
-                        elevation: 10,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(18),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(
-                                height: 200,
-                                child: Stack(
-                                  children: [
-                                    PageView.builder(
-                                      itemCount: photoUrls.length,
-                                      controller: PageController(initialPage: currentPhotoIndex),
-                                      onPageChanged: (idx) {
-                                        setState(() {
-                                          photoPageIndex[index] = idx;
-                                        });
-                                      },
-                                      itemBuilder: (context, idx) {
-                                        return ClipRRect(
-                                          borderRadius: BorderRadius.circular(18),
-                                          child: CachedNetworkImage(
-                                            imageUrl: photoUrls[idx],
-                                            height: 200,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
-                                            errorWidget: (context, url, error) => Container(
-                                              color: Colors.grey[200],
-                                              height: 200,
-                                              child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                : Stack(
+                    children: [
+                      CardSwiper(
+                        key: ValueKey(cardSwiperKey),
+                        cardsCount: currentRoundList.length,
+                        onSwipe: (previousIndex, currentIndex, direction) {
+                          print("🔄 卡片滑動 - 方向: $direction");
+                          // 在滑動完成時顯示提示文字
+                          if (direction == CardSwiperDirection.left) {
+                            _showSwipeHintTemporarily('沒 fu 啦', Colors.red);
+                          } else if (direction == CardSwiperDirection.right) {
+                            _showSwipeHintTemporarily('哇想吃！', Colors.green);
+                          }
+                          handleSwipe(previousIndex, currentIndex, direction);
+                        },
+                        cardBuilder: (context, index) {
+                          final restaurant = currentRoundList[index];
+                          double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+                          List typesList = [];
+                          if (restaurant['types'] != null) {
+                            try {
+                              typesList = json.decode(restaurant['types']!);
+                            } catch (_) {}
+                          }
+                          final String typeText = classifyRestaurant(typesList, restaurant);
+                          final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+                          final String openStatus = getOpenStatus(restaurant);
+                          // 多圖輪播
+                          List<String> photoUrls = [];
+                          if (restaurant['photo_urls'] != null) {
+                            try {
+                              photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+                            } catch (_) {}
+                          }
+                          if (photoUrls.isEmpty) {
+                            photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
+                          }
+                          int currentPhotoIndex = photoPageIndex[index] ?? 0;
+                          return Card(
+                            elevation: 10,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    height: 200,
+                                    child: Stack(
+                                      children: [
+                                        PageView.builder(
+                                          itemCount: photoUrls.length,
+                                          controller: PageController(initialPage: currentPhotoIndex),
+                                          onPageChanged: (idx) {
+                                            setState(() {
+                                              photoPageIndex[index] = idx;
+                                            });
+                                          },
+                                          itemBuilder: (context, idx) {
+                                            return ClipRRect(
+                                              borderRadius: BorderRadius.circular(18),
+                                              child: CachedNetworkImage(
+                                                imageUrl: photoUrls[idx],
+                                                height: 200,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
+                                                errorWidget: (context, url, error) => Container(
+                                                  color: Colors.grey[200],
+                                                  height: 200,
+                                                  child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        // 指示條
+                                        if (photoUrls.length > 1)
+                                          Positioned(
+                                            bottom: 10,
+                                            left: 0,
+                                            right: 0,
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: List.generate(photoUrls.length, (dotIdx) => Container(
+                                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                                width: 8,
+                                                height: 8,
+                                                decoration: BoxDecoration(
+                                                  color: currentPhotoIndex == dotIdx ? Colors.white : Colors.white54,
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(color: Colors.black12),
+                                                ),
+                                              )),
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    // 指示條
-                                    if (photoUrls.length > 1)
-                                      Positioned(
-                                        bottom: 10,
-                                        left: 0,
-                                        right: 0,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: List.generate(photoUrls.length, (dotIdx) => Container(
-                                            margin: const EdgeInsets.symmetric(horizontal: 3),
-                                            width: 8,
-                                            height: 8,
+                                        // 餐廳名稱與營業狀態
+                                        Positioned(
+                                          left: 16,
+                                          bottom: 16,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: currentPhotoIndex == dotIdx ? Colors.white : Colors.white54,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(color: Colors.black12),
+                                              color: Colors.black.withOpacity(0.5),
+                                              borderRadius: BorderRadius.circular(12),
                                             ),
-                                          )),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  restaurant['name'] ?? '未知餐廳',
+                                                  style: const TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  openStatus,
+                                                  style: const TextStyle(fontSize: 18, color: Colors.white),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.star, color: Colors.amber, size: 20),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        ratingText,
+                                        style: const TextStyle(fontSize: 16, color: Colors.black87),
                                       ),
-                                    // 餐廳名稱與營業狀態
-                                    Positioned(
-                                      left: 16,
-                                      bottom: 16,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.5),
-                                          borderRadius: BorderRadius.circular(12),
+                                      const SizedBox(width: 18),
+                                      const Icon(Icons.place, color: Colors.blueGrey, size: 20),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        dist >= 1000
+                                            ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
+                                            : '${dist.toStringAsFixed(0)} 公尺',
+                                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    typeText,
+                                    style: const TextStyle(fontSize: 15, color: Colors.grey),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          favorites.contains(restaurant['name'] ?? '')
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color: Colors.amber,
                                         ),
-                                        child: Row(
-                                          children: [
-                                            Text(
-                                              restaurant['name'] ?? '未知餐廳',
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              openStatus,
-                                              style: const TextStyle(fontSize: 18, color: Colors.white),
-                                            ),
-                                          ],
+                                        onPressed: () {
+                                          setState(() {
+                                            String name = restaurant['name'] ?? '';
+                                            if (favorites.contains(name)) {
+                                              favorites.remove(name);
+                                            } else {
+                                              favorites.add(name);
+                                            }
+                                            saveFavorites();
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(width: 8),
+                                      IconButton(
+                                        icon: const Icon(Icons.navigation, color: Colors.deepPurple),
+                                        onPressed: () {
+                                          openMap(
+                                            restaurant['lat'] ?? '',
+                                            restaurant['lng'] ?? '',
+                                            restaurant['name'] ?? '',
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      // 滑動提示文字
+                      if (_showSwipeHint)
+                        AnimatedBuilder(
+                          animation: _swipeAnimationController,
+                          builder: (context, child) {
+                            return Positioned(
+                              top: 20,
+                              left: _swipeHintText == '沒 fu 啦' ? 20 : null,
+                              right: _swipeHintText == '哇想吃！' ? null : 20,
+                              child: SlideTransition(
+                                position: _swipePositionAnimation,
+                                child: FadeTransition(
+                                  opacity: _swipeOpacityAnimation,
+                                  child: ScaleTransition(
+                                    scale: _swipeScaleAnimation,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: _swipeHintColor.withOpacity(0.9),
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.2),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        _swipeHintText,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 18),
-                              Row(
-                                children: [
-                                  const Icon(Icons.star, color: Colors.amber, size: 20),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    ratingText,
-                                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                  ),
-                                  const SizedBox(width: 18),
-                                  const Icon(Icons.place, color: Colors.blueGrey, size: 20),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    dist >= 1000
-                                        ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
-                                        : '${dist.toStringAsFixed(0)} 公尺',
-                                    style: const TextStyle(fontSize: 16, color: Colors.black54),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                typeText,
-                                style: const TextStyle(fontSize: 15, color: Colors.grey),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      favorites.contains(restaurant['name'])
-                                          ? Icons.star
-                                          : Icons.star_border,
-                                      color: Colors.amber,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        String name = restaurant['name'] ?? '';
-                                        if (favorites.contains(name)) {
-                                          favorites.remove(name);
-                                        } else {
-                                          favorites.add(name);
-                                        }
-                                        saveFavorites();
-                                      });
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(Icons.navigation, color: Colors.deepPurple),
-                                    onPressed: () {
-                                      openMap(
-                                        restaurant['lat'] ?? '',
-                                        restaurant['lng'] ?? '',
-                                        restaurant['name'] ?? '',
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                    ],
                   ),
           ),
         ],
@@ -924,6 +1025,27 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> {
       print('取得 details API 圖片失敗: $e');
     }
     return ['https://via.placeholder.com/400x300.png?text=No+Image'];
+  }
+
+  void _showSwipeHintTemporarily(String text, Color color) {
+    setState(() {
+      _swipeHintText = text;
+      _swipeHintColor = color;
+      _showSwipeHint = true;
+    });
+    
+    // 播放動畫
+    _swipeAnimationController.forward();
+    
+    // 1.5秒後自動隱藏
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _showSwipeHint = false;
+        });
+        _swipeAnimationController.reverse();
+      }
+    });
   }
 }
 
