@@ -28,7 +28,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # 如果有 assets 或 fonts 再加下來
+  assets:
+    - assets/loading_pig.png
 
 flutter_launcher_icons:
   android: true

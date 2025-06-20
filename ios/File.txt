@@ -1,0 +1,2 @@
+Validation failed (409)
+Invalid bundle. Because your app supports Multitasking on iPad, you need to include the launch_image launch storyboard file in your com.chuenen.fooder bundle. Use UILaunchScreen instead if the app’s MinimumOSVersion is 14 or higher and you prefer to configure the launch screen without storyboards. For details, see: https://developer.apple.com/documentation/bundleresources/information_property_list/uilaunchstoryboardname（識別碼：684d99da-f0f7-42f5-a9d8-906d19b6256f）
