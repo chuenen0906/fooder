@@ -65,6 +65,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Color _swipeHintColor = Colors.red;
   bool _isSwipingLeft = false;
   Offset? _dragStartPosition;
+  // 新增：判斷是否正在觸碰圖片
+  bool isTouchingImage = false;
 
   @override
   void initState() {
@@ -382,6 +384,16 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     if (direction == CardSwiperDirection.right) {
       liked.add(json.encode(swipedRestaurant));
     }
+
+    // 新增：滑動時顯示提示文字（慢慢滑也會顯示）
+    handleSwipeUpdate(direction, 1.0);
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _showSwipeHint = false;
+        });
+      }
+    });
 
     if (previous == currentRoundList.length - 1) {
       List<Map<String, String>> nextRoundList = liked.map((e) => Map<String, String>.from(json.decode(e))).toList();
@@ -716,33 +728,33 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 ? const Center(child: CircularProgressIndicator())
                 : Stack(
                     children: [
-                      Listener(
-                        onPointerDown: (event) {
-                          _dragStartPosition = event.position;
+                      GestureDetector(
+                        onPanStart: (details) {
+                           _dragStartPosition = details.localPosition;
                         },
-                        onPointerMove: (event) {
-                          if (_dragStartPosition == null) return;
-
-                          final screenWidth = MediaQuery.of(context).size.width;
-                          final dx = event.position.dx - _dragStartPosition!.dx;
-                          // Animate fully over 1/4 of the screen width
-                          final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
-                          
-                          const threshold = 10.0;
-
-                          if (dx < -threshold) {
-                            handleSwipeUpdate(CardSwiperDirection.left, progress);
-                          } else if (dx > threshold) {
-                            handleSwipeUpdate(CardSwiperDirection.right, progress);
-                          } else {
-                            // If we moved back to the center, start hiding the hint
-                            if (_showSwipeHint) {
-                              _swipeAnimationController.reverse();
-                            }
-                          }
+                        onPanUpdate: (details) {
+                           if (_dragStartPosition == null) return;
+                           if (isTouchingImage) return;
+                           final screenWidth = MediaQuery.of(context).size.width;
+                           final dx = details.localPosition.dx - _dragStartPosition!.dx;
+                           final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
+                           const threshold = 10.0;
+                           if (dx < -threshold) {
+                             handleSwipeUpdate(CardSwiperDirection.left, progress);
+                           } else if (dx > threshold) {
+                             handleSwipeUpdate(CardSwiperDirection.right, progress);
+                           } else {
+                             if (_showSwipeHint) {
+                               _swipeAnimationController.reverse();
+                             }
+                           }
                         },
-                        onPointerUp: (_) => handleSwipeEnd(),
-                        onPointerCancel: (_) => handleSwipeEnd(),
+                        onPanEnd: (_) {
+                          handleSwipeEnd();
+                        },
+                        onPanCancel: () {
+                          handleSwipeEnd();
+                        },
                         child: CardSwiper(
                           key: ValueKey(cardSwiperKey),
                           cardsCount: currentRoundList.length,
@@ -784,31 +796,49 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                                       height: 200,
                                       child: Stack(
                                         children: [
-                                          PageView.builder(
-                                            itemCount: photoUrls.length,
-                                            controller: PageController(initialPage: currentPhotoIndex),
-                                            onPageChanged: (idx) {
+                                          // GestureDetector 包裹圖片區域
+                                          GestureDetector(
+                                            onPanDown: (_) {
                                               setState(() {
-                                                photoPageIndex[index] = idx;
+                                                isTouchingImage = true;
                                               });
                                             },
-                                            itemBuilder: (context, idx) {
-                                              return ClipRRect(
-                                                borderRadius: BorderRadius.circular(18),
-                                                child: CachedNetworkImage(
-                                                  imageUrl: photoUrls[idx],
-                                                  height: 200,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                  placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
-                                                  errorWidget: (context, url, error) => Container(
-                                                    color: Colors.grey[200],
-                                                    height: 200,
-                                                    child: const Center(child: Icon(Icons.error, color: Colors.red)),
-                                                  ),
-                                                ),
-                                              );
+                                            onPanEnd: (_) {
+                                              setState(() {
+                                                isTouchingImage = false;
+                                              });
                                             },
+                                            onPanCancel: () {
+                                              setState(() {
+                                                isTouchingImage = false;
+                                              });
+                                            },
+                                            child: PageView.builder(
+                                              itemCount: photoUrls.length,
+                                              controller: PageController(initialPage: currentPhotoIndex),
+                                              onPageChanged: (idx) {
+                                                setState(() {
+                                                  photoPageIndex[index] = idx;
+                                                });
+                                              },
+                                              itemBuilder: (context, idx) {
+                                                return ClipRRect(
+                                                  borderRadius: BorderRadius.circular(18),
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: photoUrls[idx],
+                                                    height: 200,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                    placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
+                                                    errorWidget: (context, url, error) => Container(
+                                                      color: Colors.grey[200],
+                                                      height: 200,
+                                                      child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
                                           ),
                                           // 指示條
                                           if (photoUrls.length > 1)
@@ -862,66 +892,99 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(height: 18),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.star, color: Colors.amber, size: 20),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          ratingText,
-                                          style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                        ),
-                                        const SizedBox(width: 18),
-                                        const Icon(Icons.place, color: Colors.blueGrey, size: 20),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          dist >= 1000
-                                              ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
-                                              : '${dist.toStringAsFixed(0)} 公尺',
-                                          style: const TextStyle(fontSize: 16, color: Colors.black54),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      typeText,
-                                      style: const TextStyle(fontSize: 15, color: Colors.grey),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            favorites.contains(restaurant['name'] ?? '')
-                                                ? Icons.star
-                                                : Icons.star_border,
-                                            color: Colors.amber,
+                                    // 新增：卡片下方資訊區包 GestureDetector
+                                    GestureDetector(
+                                      onPanStart: (details) {
+                                        _dragStartPosition = details.localPosition;
+                                      },
+                                      onPanUpdate: (details) {
+                                        if (_dragStartPosition == null) return;
+                                        final screenWidth = MediaQuery.of(context).size.width;
+                                        final dx = details.localPosition.dx - _dragStartPosition!.dx;
+                                        final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
+                                        const threshold = 10.0;
+                                        if (dx < -threshold) {
+                                          handleSwipeUpdate(CardSwiperDirection.left, progress);
+                                        } else if (dx > threshold) {
+                                          handleSwipeUpdate(CardSwiperDirection.right, progress);
+                                        } else {
+                                          if (_showSwipeHint) {
+                                            _swipeAnimationController.reverse();
+                                          }
+                                        }
+                                      },
+                                      onPanEnd: (_) {
+                                        handleSwipeEnd();
+                                      },
+                                      onPanCancel: () {
+                                        handleSwipeEnd();
+                                      },
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 18),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.star, color: Colors.amber, size: 20),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                ratingText,
+                                                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                              ),
+                                              const SizedBox(width: 18),
+                                              const Icon(Icons.place, color: Colors.blueGrey, size: 20),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                dist >= 1000
+                                                    ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
+                                                    : '${dist.toStringAsFixed(0)} 公尺',
+                                                style: const TextStyle(fontSize: 16, color: Colors.black54),
+                                              ),
+                                            ],
                                           ),
-                                          onPressed: () {
-                                            setState(() {
-                                              String name = restaurant['name'] ?? '';
-                                              if (favorites.contains(name)) {
-                                                favorites.remove(name);
-                                              } else {
-                                                favorites.add(name);
-                                              }
-                                              saveFavorites();
-                                            });
-                                          },
-                                        ),
-                                        const SizedBox(width: 8),
-                                        IconButton(
-                                          icon: const Icon(Icons.navigation, color: Colors.deepPurple),
-                                          onPressed: () {
-                                            openMap(
-                                              restaurant['lat'] ?? '',
-                                              restaurant['lng'] ?? '',
-                                              restaurant['name'] ?? '',
-                                            );
-                                          },
-                                        ),
-                                      ],
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            typeText,
+                                            style: const TextStyle(fontSize: 15, color: Colors.grey),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  favorites.contains(restaurant['name'] ?? '')
+                                                      ? Icons.star
+                                                      : Icons.star_border,
+                                                  color: Colors.amber,
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    String name = restaurant['name'] ?? '';
+                                                    if (favorites.contains(name)) {
+                                                      favorites.remove(name);
+                                                    } else {
+                                                      favorites.add(name);
+                                                    }
+                                                    saveFavorites();
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                icon: const Icon(Icons.navigation, color: Colors.deepPurple),
+                                                onPressed: () {
+                                                  openMap(
+                                                    restaurant['lat'] ?? '',
+                                                    restaurant['lng'] ?? '',
+                                                    restaurant['name'] ?? '',
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
