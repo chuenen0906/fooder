@@ -146,13 +146,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         timeLimit: const Duration(seconds: 5),
       );
       
+      // Distance and Radius check logic
       final cachedLat = prefs.getDouble('cache_lat');
       final cachedLng = prefs.getDouble('cache_lng');
+      final cachedRadius = prefs.getDouble('cache_radius'); // Read cached radius
       final cachedDataString = prefs.getString('restaurant_cache');
 
-      if (cachedLat != null && cachedLng != null && cachedDataString != null) {
+      if (cachedLat != null && cachedLng != null && cachedDataString != null && cachedRadius != null) {
         final distance = Geolocator.distanceBetween(cachedLat, cachedLng, currentPosition.latitude, currentPosition.longitude);
-        if (distance < 500) {
+        
+        // Use cache ONLY if both location and radius are the same
+        if (distance < 500 && (radiusKm - cachedRadius).abs() < 0.1) {
           final List<dynamic> decodedData = jsonDecode(cachedDataString);
           final cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
           if(mounted) {
@@ -201,19 +205,47 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       final cachedIds = cachedRestaurants.map((r) => r['place_id']).toSet();
 
       if (!const SetEquality().equals(newIds, cachedIds)) {
+        
+        List<Map<String, String>> finalList = List.from(newRestaurants);
+
+        // --- NEW FILTERING LOGIC START ---
+        final double searchRadiusMeters = radiusKm * 1000;
+        finalList = finalList.where((r) {
+          double dist = double.parse(r['distance'] ?? '999999');
+          return dist <= searchRadiusMeters;
+        }).toList();
+        // --- NEW FILTERING LOGIC END ---
+
+        // Sorting logic
+        if (radiusKm <= 2) {
+          finalList.sort((a, b) {
+            double distA = double.parse(a['distance'] ?? '99999');
+            double distB = double.parse(b['distance'] ?? '99999');
+            return distA.compareTo(distB);
+          });
+        } else {
+          finalList.shuffle();
+        }
+
         if (mounted) {
           setState(() {
-            fullRestaurantList = List.from(newRestaurants);
-            currentRoundList = List.from(newRestaurants)..shuffle();
-            round = 1; liked.clear(); cardSwiperKey++;
-            isLoading = false; isSplash = false; _loadingText = '';
+            fullRestaurantList = finalList; // Use the processed list
+            currentRoundList = finalList; // Use the processed list
+            round = 1; 
+            liked.clear(); 
+            cardSwiperKey++;
+            isLoading = false; 
+            isSplash = false; 
+            _loadingText = '';
           });
         }
         
-        await prefs.setString('restaurant_cache', jsonEncode(newRestaurants));
+        // Update cache with new data AND new radius
+        await prefs.setString('restaurant_cache', jsonEncode(finalList)); // Use finalList to save sorted/shuffled
         await prefs.setInt('cache_timestamp', DateTime.now().millisecondsSinceEpoch);
         await prefs.setDouble('cache_lat', currentPosition.latitude);
         await prefs.setDouble('cache_lng', currentPosition.longitude);
+        await prefs.setDouble('cache_radius', radiusKm); // Save the new radius
       } else {
         if (mounted) {
           setState(() { isLoading = false; _loadingText = ''; });
@@ -261,24 +293,40 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   Future<List<String>> _getPlaceIdsFromNearbySearch(double lat, double lng, double radius, bool onlyShowOpen) async {
     List<String> placeIds = [];
-    String url =
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-        'location=$lat,$lng&radius=${min(50000.0, radius)}&type=restaurant&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
-    try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List results = data['results'] ?? [];
-        for (var item in results) {
-          final placeId = item['place_id'] as String?;
-          if (placeId != null && !placeIds.contains(placeId)) {
-            placeIds.add(placeId);
-          }
-        }
+    String? nextPageToken;
+
+    do {
+      String url;
+      if (nextPageToken == null) {
+        url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
+            'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
+      } else {
+        // As per Google's requirement, wait before making the next page request.
+        await Future.delayed(const Duration(seconds: 2));
+        url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
+            'pagetoken=$nextPageToken&key=$apiKey';
       }
-    } catch (e) {
-      // Fail silently
-    }
+
+      try {
+        final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final List results = data['results'] ?? [];
+          for (var item in results) {
+            final placeId = item['place_id'] as String?;
+            if (placeId != null && !placeIds.contains(placeId)) {
+              placeIds.add(placeId);
+            }
+          }
+          nextPageToken = data['next_page_token'] as String?;
+        } else {
+          nextPageToken = null;
+        }
+      } catch (e) {
+        nextPageToken = null;
+      }
+    } while (nextPageToken != null && placeIds.length < 60); // Stop if we have enough or no more pages
+
     return placeIds;
   }
 
@@ -293,6 +341,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         final item = data['result'];
 
         if (item == null) return null;
+
+        // --- NEW FILTERING LOGIC START ---
+        final List<dynamic> types = item['types'] ?? [];
+        // 排除 麵包店, 咖啡廳/飲料店, 酒吧
+        const List<String> excludedTypes = ['bakery', 'cafe', 'bar']; 
+        final bool isExcluded = types.any((type) => excludedTypes.contains(type.toString()));
+        if (isExcluded) {
+          // 如果是排除的類型，就直接返回 null，這個地點將不會被顯示
+          return null; 
+        }
+        // --- NEW FILTERING LOGIC END ---
 
         final photoReferences = item['photos'] != null && item['photos'].isNotEmpty
             ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
@@ -554,7 +613,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: "重新整理餐廳資料",
-            onPressed: () => fetchAllRestaurants(radiusKm: searchRadius),
+            onPressed: () {
+              // 重置輪次狀態
+              setState(() {
+                round = 1;
+                liked.clear();
+                cardSwiperKey++;
+                selectedIndex = 0;
+              });
+              // 重新載入餐廳資料
+              fetchAllRestaurants(radiusKm: searchRadius);
+            },
           ),
           IconButton(
             icon: const Icon(Icons.fast_forward),
@@ -657,24 +726,74 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               ),
               if (currentLat != null && currentLng != null)
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextButton.icon(
-                        icon: const Icon(Icons.my_location, size: 18),
-                        label: Text(showLocation ? '隱藏定位' : '顯示目前定位', style: const TextStyle(fontSize: 13)),
-                        onPressed: () => setState(() => showLocation = !showLocation),
-                      ),
-                      if (showLocation)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2.0, left: 4.0),
-              child: Text(
-                '目前定位：$currentLat, $currentLng',
-                        style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
-                      ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                    ],
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => setState(() => showLocation = !showLocation),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: showLocation ? Colors.deepPurple.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  showLocation ? Icons.location_on : Icons.location_off,
+                                  size: 20,
+                                  color: showLocation ? Colors.deepPurple : Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      showLocation ? '隱藏定位' : '顯示目前定位',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: showLocation ? Colors.deepPurple : Colors.grey[700],
+                                      ),
+                                    ),
+                                    if (showLocation)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4.0),
+                                        child: Text(
+                                          '目前定位：${currentLat?.toStringAsFixed(6) ?? 'N/A'}, ${currentLng?.toStringAsFixed(6) ?? 'N/A'}',
+                                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                showLocation ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               Expanded(
@@ -890,8 +1009,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                                                   const SizedBox(width: 4),
                                                   Text(
                                                     dist >= 1000
-                                                        ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
-                                                        : '${dist.toStringAsFixed(0)} 公尺',
+                                                        ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km (直線)'
+                                                        : '${dist.toStringAsFixed(0)} m (直線)',
                                                     style: const TextStyle(fontSize: 16, color: Colors.black54),
                                                   ),
                                                 ],
