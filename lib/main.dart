@@ -70,12 +70,39 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Offset? _dragStartPosition;
   // 新增：判斷是否正在觸碰圖片
   bool isTouchingImage = false;
+  
+  // 新增：Round 1 隨機標題
+  String _round1Title = '';
+  final List<String> _round1Titles = [
+    '找找你附近有什麼好吃的',
+    '先來滑一輪附近的美食',
+    '別那麼挑好嗎？等等還能篩選',
+    '附近這些店想被你發現',
+    '那麼多店家 越滑越餓',
+    '探索所有店家',
+    '有那麼多選擇'
+  ];
+  
+  // 新增：Round 2 隨機標題
+  String _round2Title = '';
+  final List<String> _round2Titles = [
+    '再滑一次 這次認真點！',
+    '精選名單來了 這輪你不能亂滑',
+    '右滑過的店都來排隊見你了',
+    '想吃的再確認一下',
+    '右滑你的右滑',
+    '挑剔點~不然你還是不知道吃什麼'
+  ];
 
   @override
   void initState() {
     super.initState();
     loadFavorites();
     fetchAllRestaurants(radiusKm: searchRadius);
+    
+    // 初始化隨機標題
+    _updateRound1Title();
+    _updateRound2Title();
     
     // 初始化滑動提示文字動畫控制器
     _swipeAnimationController = AnimationController(
@@ -238,6 +265,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             isSplash = false; 
             _loadingText = '';
           });
+          // 更新隨機標題
+          _updateRound1Title();
         }
         
         // Update cache with new data AND new radius
@@ -433,6 +462,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           cardSwiperKey++;
           selectedIndex = 0;
         });
+        // 如果進入 Round 2，更新 Round 2 隨機標題
+        if (round == 2) {
+          _updateRound2Title();
+        }
       }
     }
   }
@@ -486,6 +519,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         cardSwiperKey++;
         selectedIndex = 0;
       });
+      // 如果進入 Round 2，更新 Round 2 隨機標題
+      if (round == 2) {
+        _updateRound2Title();
+      }
     }
   }
 
@@ -621,6 +658,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 cardSwiperKey++;
                 selectedIndex = 0;
               });
+              // 更新隨機標題
+              _updateRound1Title();
+              _updateRound2Title();
               // 重新載入餐廳資料
               fetchAllRestaurants(radiusKm: searchRadius);
             },
@@ -676,34 +716,73 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               const Divider(height: 1, color: Color(0x11000000)),
               if (round == 1)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
                   child: Center(
-                    child: Text(
-                      '不接受  vs  可接受',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.deepPurple,
-                        letterSpacing: 1.5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        '🌀 $_round1Title',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.deepPurple,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
                 ),
               if (round == 2)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
                   child: Center(
-                    child: Text(
-                      '沒興趣  vs  有興趣',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.deepPurple,
-                        letterSpacing: 1.5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        '🔍 $_round2Title',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
+                  ),
                 ),
-              ),
+              if (round == 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.red.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        '🎯 抉擇吧',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Row(
@@ -1180,6 +1259,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         }
       });
     }
+  }
+
+  void _updateRound1Title() {
+    final random = Random();
+    setState(() {
+      _round1Title = _round1Titles[random.nextInt(_round1Titles.length)];
+    });
+  }
+
+  void _updateRound2Title() {
+    final random = Random();
+    setState(() {
+      _round2Title = _round2Titles[random.nextInt(_round2Titles.length)];
+    });
   }
 }
 
