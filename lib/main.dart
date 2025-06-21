@@ -129,7 +129,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Future<void> fetchAllRestaurants({double radiusKm = 5, bool onlyShowOpen = true}) async {
     final prefs = await SharedPreferences.getInstance();
     
-    // Moved permission and location logic to the top
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) throw Exception('請開啟定位服務');
@@ -147,15 +146,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         timeLimit: const Duration(seconds: 5),
       );
       
-      // Distance check logic
       final cachedLat = prefs.getDouble('cache_lat');
       final cachedLng = prefs.getDouble('cache_lng');
       final cachedDataString = prefs.getString('restaurant_cache');
 
       if (cachedLat != null && cachedLng != null && cachedDataString != null) {
         final distance = Geolocator.distanceBetween(cachedLat, cachedLng, currentPosition.latitude, currentPosition.longitude);
-        if (distance < 500) { // Less than 500 meters
-          // Location is similar, trust the cache and avoid API call.
+        if (distance < 500) {
           final List<dynamic> decodedData = jsonDecode(cachedDataString);
           final cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
           if(mounted) {
@@ -167,17 +164,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               _loadingText = '從附近快取載入';
             });
           }
-          return; // EXIT EARLY
+          return; 
         }
       }
       
-      // If we are here, it means we moved or have no valid location cache.
-      // Continue with time-based cache logic + background fetch.
       List<Map<String, String>> cachedRestaurants = [];
       final cachedTimestamp = prefs.getInt('cache_timestamp');
       if (cachedDataString != null && cachedTimestamp != null) {
           final now = DateTime.now().millisecondsSinceEpoch;
-          if (now - cachedTimestamp < 2 * 60 * 60 * 1000) { // 2 hours
+          if (now - cachedTimestamp < 2 * 60 * 60 * 1000) {
             final List<dynamic> decodedData = jsonDecode(cachedDataString);
             cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
             if (mounted && cachedRestaurants.isNotEmpty) {
@@ -197,7 +192,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       }
 
       final newRestaurants = await _fetchFromApi(
-        position: currentPosition, // Pass position
+        position: currentPosition,
         radiusKm: radiusKm, 
         onlyShowOpen: onlyShowOpen
       );
@@ -217,8 +212,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         
         await prefs.setString('restaurant_cache', jsonEncode(newRestaurants));
         await prefs.setInt('cache_timestamp', DateTime.now().millisecondsSinceEpoch);
-        await prefs.setDouble('cache_lat', currentPosition.latitude); // Save new location
-        await prefs.setDouble('cache_lng', currentPosition.longitude); // Save new location
+        await prefs.setDouble('cache_lat', currentPosition.latitude);
+        await prefs.setDouble('cache_lng', currentPosition.longitude);
       } else {
         if (mounted) {
           setState(() { isLoading = false; _loadingText = ''; });
@@ -251,17 +246,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
     double centerLat = position.latitude;
     double centerLng = position.longitude;
-    double radius = radiusKm * 1000;
 
-    // Step 1: Get Place IDs from a cheap Nearby Search call
-    List<String> placeIds = [];
-    String nearbySearchUrl =
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-        'location=$centerLat,$centerLng&radius=${min(50000.0, radius)}&type=restaurant&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
-    
-    await _getPlaceIdsFromNearbySearch(nearbySearchUrl, placeIds);
+    List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
 
-    // Step 2: Get details for each Place ID using the 'fields' parameter for cost saving
     List<Future<Map<String, String>?>> detailFutures = [];
     for (final placeId in placeIds) {
       detailFutures.add(_fetchPlaceDetails(placeId, centerLat, centerLng));
@@ -269,11 +256,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
     final List<Map<String, String>?> detailedRestaurants = await Future.wait(detailFutures);
 
-    // Filter out any nulls that may have resulted from failed API calls and return
     return detailedRestaurants.where((r) => r != null).cast<Map<String, String>>().toList();
   }
 
-  Future<void> _getPlaceIdsFromNearbySearch(String url, List<String> placeIds) async {
+  Future<List<String>> _getPlaceIdsFromNearbySearch(double lat, double lng, double radius, bool onlyShowOpen) async {
+    List<String> placeIds = [];
+    String url =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
+        'location=$lat,$lng&radius=${min(50000.0, radius)}&type=restaurant&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
     try {
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
@@ -287,8 +277,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         }
       }
     } catch (e) {
-      // Fail silently for the search, details will filter out failures.
+      // Fail silently
     }
+    return placeIds;
   }
 
   Future<Map<String, String>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
@@ -341,7 +332,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       liked.add(json.encode(swipedRestaurant));
     }
 
-    // 新增：滑動時顯示提示文字（慢慢滑也會顯示）
     handleSwipeUpdate(direction, 1.0);
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
@@ -357,8 +347,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       nextRoundList = nextRoundList.where((restaurant) {
         double distance = double.parse(restaurant['distance'] ?? '0');
         bool isInRange = distance <= searchRadius * 1000;
-        if (!isInRange) {
-        }
         return isInRange;
       }).toList();
       
@@ -412,8 +400,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     nextRoundList = nextRoundList.where((restaurant) {
       double distance = double.parse(restaurant['distance'] ?? '0');
       bool isInRange = distance <= searchRadius * 1000;
-      if (!isInRange) {
-      }
       return isInRange;
     }).toList();
     
@@ -445,7 +431,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   String classifyRestaurant(List types, Map<String, String> restaurant) {
-    // 台灣常見連鎖早餐店關鍵字
     final breakfastKeywords = [
       '美而美', '弘爺', '拉亞', '麥味登', '早安美芝城', 'Q Burger', '晨間廚房', '元氣', '早安', '晨間', '早餐', '早點',
       '福來早餐', '樂活早餐', '晨間廚坊', '晨間廚房', '晨間食堂', '晨間食坊', '晨間小棧', '晨間小館', '晨間坊',
@@ -458,11 +443,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     if (breakfastKeywords.any((kw) => name.contains(kw))) {
       return '早餐店';
     }
-    // 新增：店名包含「越南」就分類為越南料理
     if (name.contains('越南')) {
       return '越南料理';
     }
-    // 新增：速食品牌關鍵字判斷
     final fastFoodKeywords = [
       '麥當勞', '肯德基', 'KFC', '摩斯', 'MOS', '漢堡王', 'Burger King', '必勝客', 'Pizza Hut',
       '達美樂', 'Domino', '拿坡里', 'Napoli', '頂呱呱', '21世紀', 'Subway', '丹丹', '麥味登', '胖老爹', '德克士', '美式漢堡', '炸雞'
@@ -471,7 +454,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       return '速食餐廳';
     }
     
-    // 首先檢查是否為速食餐廳
     if (types.contains('fast_food') || 
         types.contains('hamburger') || 
         types.contains('sandwich') ||
@@ -486,7 +468,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       return '速食餐廳';
     }
     
-    // 咖啡廳
     if (types.contains('cafe') || 
         types.contains('coffee_shop') || 
         types.contains('bakery') ||
@@ -498,7 +479,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       return '咖啡廳';
     }
     
-    // 其他分類
     if (types.contains('restaurant')) {
       if (types.contains('chinese') || types.contains('taiwanese')) return '中式料理';
       if (types.contains('japanese') || types.contains('sushi') || types.contains('ramen')) return '日式料理';
@@ -699,7 +679,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 ),
               Expanded(
                 child: currentRoundList.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
+                    ? Center(child: isLoading ? CircularProgressIndicator() : Text(_loadingText))
                     : Stack(
                         children: [
                           GestureDetector(
@@ -1070,7 +1050,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   void handleSwipeEnd() {
-    if (_dragStartPosition == null) return; // Avoid multiple calls
+    if (_dragStartPosition == null) return;
     _dragStartPosition = null;
     if (_showSwipeHint) {
       _swipeAnimationController.reverse().whenComplete(() {
