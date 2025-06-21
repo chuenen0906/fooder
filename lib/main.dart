@@ -128,40 +128,79 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   Future<void> fetchAllRestaurants({double radiusKm = 5, bool onlyShowOpen = true}) async {
     final prefs = await SharedPreferences.getInstance();
-    List<Map<String, String>> cachedRestaurants = [];
+    
+    // Moved permission and location logic to the top
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw Exception('請開啟定位服務');
 
-    // 1. Try to load from cache
-    final cachedDataString = prefs.getString('restaurant_cache');
-    final cachedTimestamp = prefs.getInt('cache_timestamp');
-
-    if (cachedDataString != null && cachedTimestamp != null) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (now - cachedTimestamp < 2 * 60 * 60 * 1000) { // 2 hours
-        final List<dynamic> decodedData = jsonDecode(cachedDataString);
-        cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
-        
-        if (mounted && cachedRestaurants.isNotEmpty) {
-          setState(() {
-            _loadingText = '顯示快取資料...';
-            fullRestaurantList = List.from(cachedRestaurants);
-            currentRoundList = List.from(cachedRestaurants)..shuffle();
-            isLoading = false;
-            isSplash = false;
-          });
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          throw Exception('需要定位權限才能尋找附近餐廳');
         }
       }
-    }
 
-    // 2. Fetch fresh data from API in the background
-    try {
-      if (mounted && cachedRestaurants.isEmpty) {
-          setState(() {
-            isLoading = true;
-            _loadingText = '正在更新餐廳列表...';
-          });
+      final Position currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      );
+      
+      // Distance check logic
+      final cachedLat = prefs.getDouble('cache_lat');
+      final cachedLng = prefs.getDouble('cache_lng');
+      final cachedDataString = prefs.getString('restaurant_cache');
+
+      if (cachedLat != null && cachedLng != null && cachedDataString != null) {
+        final distance = Geolocator.distanceBetween(cachedLat, cachedLng, currentPosition.latitude, currentPosition.longitude);
+        if (distance < 500) { // Less than 500 meters
+          // Location is similar, trust the cache and avoid API call.
+          final List<dynamic> decodedData = jsonDecode(cachedDataString);
+          final cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
+          if(mounted) {
+            setState(() {
+              fullRestaurantList = cachedRestaurants;
+              currentRoundList = List.from(cachedRestaurants)..shuffle();
+              isLoading = false;
+              isSplash = false;
+              _loadingText = '從附近快取載入';
+            });
+          }
+          return; // EXIT EARLY
+        }
+      }
+      
+      // If we are here, it means we moved or have no valid location cache.
+      // Continue with time-based cache logic + background fetch.
+      List<Map<String, String>> cachedRestaurants = [];
+      final cachedTimestamp = prefs.getInt('cache_timestamp');
+      if (cachedDataString != null && cachedTimestamp != null) {
+          final now = DateTime.now().millisecondsSinceEpoch;
+          if (now - cachedTimestamp < 2 * 60 * 60 * 1000) { // 2 hours
+            final List<dynamic> decodedData = jsonDecode(cachedDataString);
+            cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
+            if (mounted && cachedRestaurants.isNotEmpty) {
+              setState(() {
+                _loadingText = '顯示快取資料...';
+                fullRestaurantList = List.from(cachedRestaurants);
+                currentRoundList = List.from(cachedRestaurants)..shuffle();
+                isLoading = false;
+                isSplash = false;
+              });
+            }
+          }
       }
 
-      final newRestaurants = await _fetchFromApi(radiusKm: radiusKm, onlyShowOpen: onlyShowOpen);
+      if (mounted && cachedRestaurants.isEmpty) {
+        setState(() { isLoading = true; _loadingText = '正在更新餐廳列表...'; });
+      }
+
+      final newRestaurants = await _fetchFromApi(
+        position: currentPosition, // Pass position
+        radiusKm: radiusKm, 
+        onlyShowOpen: onlyShowOpen
+      );
 
       final newIds = newRestaurants.map((r) => r['place_id']).toSet();
       final cachedIds = cachedRestaurants.map((r) => r['place_id']).toSet();
@@ -171,25 +210,21 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           setState(() {
             fullRestaurantList = List.from(newRestaurants);
             currentRoundList = List.from(newRestaurants)..shuffle();
-            round = 1;
-            liked.clear();
-            cardSwiperKey++;
-            isLoading = false;
-            isSplash = false;
-            _loadingText = '';
+            round = 1; liked.clear(); cardSwiperKey++;
+            isLoading = false; isSplash = false; _loadingText = '';
           });
         }
         
         await prefs.setString('restaurant_cache', jsonEncode(newRestaurants));
         await prefs.setInt('cache_timestamp', DateTime.now().millisecondsSinceEpoch);
+        await prefs.setDouble('cache_lat', currentPosition.latitude); // Save new location
+        await prefs.setDouble('cache_lng', currentPosition.longitude); // Save new location
       } else {
         if (mounted) {
-          setState(() {
-            isLoading = false;
-            _loadingText = '';
-          });
+          setState(() { isLoading = false; _loadingText = ''; });
         }
       }
+
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -201,109 +236,102 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  Future<List<Map<String, String>>> _fetchFromApi({double radiusKm = 5, bool onlyShowOpen = true}) async {
-      // FIX: Add permission checks back
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        throw Exception('請開啟定位服務');
-      }
+  Future<List<Map<String, String>>> _fetchFromApi({
+    required Position position,
+    double radiusKm = 5,
+    bool onlyShowOpen = true
+  }) async {
+    if (mounted) {
+      setState(() {
+        currentLat = position.latitude;
+        currentLng = position.longitude;
+        _currentPosition = position;
+      });
+    }
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-          throw Exception('需要定位權限才能尋找附近餐廳');
-        }
-      }
+    double centerLat = position.latitude;
+    double centerLng = position.longitude;
+    double radius = radiusKm * 1000;
 
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 5),
-      );
-      
-      if (mounted) {
-        setState(() {
-          currentLat = position.latitude;
-          currentLng = position.longitude;
-          _currentPosition = position;
-        });
-      }
-      
-      double centerLat = position.latitude;
-      double centerLng = position.longitude;
-      double radius = radiusKm * 1000;
-      const int points = 1;
-      Set<String> seen = {};
-      List<Map<String, String>> allRestaurants = [];
-      List<Future<void>> searchFutures = [];
+    // Step 1: Get Place IDs from a cheap Nearby Search call
+    List<String> placeIds = [];
+    String nearbySearchUrl =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
+        'location=$centerLat,$centerLng&radius=${min(50000.0, radius)}&type=restaurant&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
+    
+    await _getPlaceIdsFromNearbySearch(nearbySearchUrl, placeIds);
 
-      String centerUrl = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-          'location=$centerLat,$centerLng&radius=${min(50000.0, radius)}&type=restaurant&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
-      
-      searchFutures.add(_searchRestaurants(centerUrl, centerLat, centerLng, seen, allRestaurants));
-      await Future.wait(searchFutures);
+    // Step 2: Get details for each Place ID using the 'fields' parameter for cost saving
+    List<Future<Map<String, String>?>> detailFutures = [];
+    for (final placeId in placeIds) {
+      detailFutures.add(_fetchPlaceDetails(placeId, centerLat, centerLng));
+    }
 
-      List<Future<void>> photoFutures = [];
-      for (var restaurant in allRestaurants) {
-        final placeId = restaurant['place_id'];
-        if (placeId != null && placeId.isNotEmpty) {
-          photoFutures.add(fetchRestaurantPhotos(placeId).then((urls) {
-            restaurant['photo_urls'] = json.encode(urls);
-          }));
-        }
-      }
-      await Future.wait(photoFutures);
+    final List<Map<String, String>?> detailedRestaurants = await Future.wait(detailFutures);
 
-      return allRestaurants;
+    // Filter out any nulls that may have resulted from failed API calls and return
+    return detailedRestaurants.where((r) => r != null).cast<Map<String, String>>().toList();
   }
-  
-  Future<void> _searchRestaurants(
-     String url,
-     double centerLat,
-     double centerLng,
-     Set<String> seen,
-     List<Map<String, String>> allRestaurants,
-   ) async {
-     try {
-       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
+  Future<void> _getPlaceIdsFromNearbySearch(String url, List<String> placeIds) async {
+    try {
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
-         final data = json.decode(response.body);
-         final List results = data['results'] ?? [];
-  
-         for (var item in results) {
-           final placeId = item['place_id'] ?? '';
-           if (placeId.isNotEmpty && !seen.contains(placeId)) {
-             seen.add(placeId);
-             
-             final photoReferences = item['photos'] != null && item['photos'].isNotEmpty
-                 ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
-                 : <String>[];
- 
-             final photoUrl = photoReferences.isNotEmpty
-                 ? 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReferences[0]}&key=$apiKey'
-                 : 'https://via.placeholder.com/400x300.png?text=No+Image';
+        final data = json.decode(response.body);
+        final List results = data['results'] ?? [];
+        for (var item in results) {
+          final placeId = item['place_id'] as String?;
+          if (placeId != null && !placeIds.contains(placeId)) {
+            placeIds.add(placeId);
+          }
+        }
+      }
+    } catch (e) {
+      // Fail silently for the search, details will filter out failures.
+    }
+  }
 
-             allRestaurants.add({
-               'name': item['name'] ?? '',
-               'image': photoUrl,
-               'lat': item['geometry']?['location']?['lat']?.toString() ?? '',
-               'lng': item['geometry']?['location']?['lng']?.toString() ?? '',
-               'distance': calculateDistance(centerLat, centerLng, item['geometry']['location']['lat'], item['geometry']['location']['lng']).toStringAsFixed(2),
-               'types': json.encode(item['types'] ?? []),
-               'rating': item['rating']?.toString() ?? 'N/A',
-               'open_now': (item['opening_hours']?['open_now']?.toString()) ?? 'unknown',
-               'photo_references': json.encode(photoReferences),
-               'place_id': placeId,
-               'photo_urls': json.encode([]),
-             });
-           }
-         }
-       }
-     } catch (e) {
-        // Fail silently
-     }
-   }
+  Future<Map<String, String>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
+    try {
+      const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity,user_ratings_total';
+      final String detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=$fields&key=$apiKey&language=zh-TW';
+
+      final response = await http.get(Uri.parse(detailsUrl)).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final item = data['result'];
+
+        if (item == null) return null;
+
+        final photoReferences = item['photos'] != null && item['photos'].isNotEmpty
+            ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
+            : <String>[];
+            
+        final photoUrls = photoReferences.take(5).map((ref) => 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey').toList();
+
+        final photoUrl = photoUrls.isNotEmpty
+            ? photoUrls.first
+            : 'https://via.placeholder.com/400x300.png?text=No+Image';
+
+        return {
+          'name': item['name'] ?? '',
+          'image': photoUrl,
+          'lat': item['geometry']?['location']?['lat']?.toString() ?? '',
+          'lng': item['geometry']?['location']?['lng']?.toString() ?? '',
+          'distance': calculateDistance(centerLat, centerLng, item['geometry']['location']['lat'], item['geometry']['location']['lng']).toStringAsFixed(2),
+          'types': json.encode(item['types'] ?? []),
+          'rating': item['rating']?.toString() ?? 'N/A',
+          'open_now': (item['opening_hours']?['open_now']?.toString()) ?? 'unknown',
+          'photo_references': json.encode(photoReferences),
+          'place_id': item['place_id'] ?? '',
+          'photo_urls': json.encode(photoUrls.isNotEmpty ? photoUrls : [photoUrl]),
+        };
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   void handleSwipe(int? previous, int? current, CardSwiperDirection direction) {
     if (previous == null) return;
@@ -1022,21 +1050,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     } else {
       throw 'Could not launch $url';
     }
-  }
-
-  Future<List<String>> fetchRestaurantPhotos(String placeId) async {
-    final detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=photos&key=$apiKey&language=zh-TW';
-    try {
-      final response = await http.get(Uri.parse(detailsUrl)).timeout(const Duration(seconds: 8));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List photos = data['result']?['photos'] ?? [];
-        final List<String> photoRefs = photos.take(5).map<String>((p) => p['photo_reference'] as String).toList();
-        return photoRefs.map((ref) => 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey').toList();
-      }
-    } catch (e) {
-    }
-    return ['https://via.placeholder.com/400x300.png?text=No+Image'];
   }
 
   void handleSwipeUpdate(CardSwiperDirection direction, double progress) {
