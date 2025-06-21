@@ -98,6 +98,21 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   bool _isRollingDice = false;
   Map<String, String>? _selectedRestaurant;
 
+  // 快取關鍵字搜尋結果
+  Map<String, List<String>> _keywordCache = {};
+  String _lastKeywordCacheKey = '';
+  
+  // 照片快取
+  Map<String, String> _photoCache = {};
+  
+  // API 成本監控
+  int _apiCallCount = 0;
+  double _estimatedCost = 0.0;
+  
+  // 防抖機制
+  Timer? _debounceTimer;
+  bool _isFetching = false;
+
   @override
   void initState() {
     super.initState();
@@ -207,7 +222,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       final cachedTimestamp = prefs.getInt('cache_timestamp');
       if (cachedDataString != null && cachedTimestamp != null) {
           final now = DateTime.now().millisecondsSinceEpoch;
-          if (now - cachedTimestamp < 2 * 60 * 60 * 1000) {
+          // 延長快取時間到 4 小時，減少 API 請求
+          if (now - cachedTimestamp < 4 * 60 * 60 * 1000) {
             final List<dynamic> decodedData = jsonDecode(cachedDataString);
             cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
             if (mounted && cachedRestaurants.isNotEmpty) {
@@ -358,13 +374,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       } catch (e) {
         nextPageToken = null;
       }
-    } while (nextPageToken != null && placeIds.length < 60); // Stop if we have enough or no more pages
+    } while (nextPageToken != null && placeIds.length < 30); // Stop if we have enough or no more pages
 
     return placeIds;
   }
 
   Future<Map<String, String>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
     try {
+      // 只請求必要的欄位，減少 API 成本
       const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity,user_ratings_total';
       final String detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=$fields&key=$apiKey&language=zh-TW';
 
@@ -390,11 +407,25 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
             : <String>[];
             
-        final photoUrls = photoReferences.take(5).map((ref) => 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey').toList();
+        // 檢查照片快取
+        String? cachedPhotoUrl;
+        if (photoReferences.isNotEmpty) {
+          final photoRef = photoReferences.first;
+          cachedPhotoUrl = _photoCache[photoRef];
+        }
+        
+        final photoUrls = photoReferences.take(2).map((ref) => 
+          cachedPhotoUrl ?? 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'
+        ).toList();
 
         final photoUrl = photoUrls.isNotEmpty
             ? photoUrls.first
             : 'https://via.placeholder.com/400x300.png?text=No+Image';
+            
+        // 儲存到快取
+        if (photoReferences.isNotEmpty && cachedPhotoUrl == null) {
+          _photoCache[photoReferences.first] = photoUrl;
+        }
 
         return {
           'name': item['name'] ?? '',
