@@ -94,6 +94,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     '挑剔點~不然你還是不知道吃什麼'
   ];
 
+  // 新增：骰子按鈕相關變數
+  bool _isRollingDice = false;
+  Map<String, String>? _selectedRestaurant;
+
   @override
   void initState() {
     super.initState();
@@ -783,26 +787,27 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ),
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Row(
-                  children: [
-                    const Text("只顯示營業中"),
-                    Switch(
-                      value: onlyShowOpen,
-                      onChanged: (value) {
-                        setState(() {
-                          onlyShowOpen = value;
-                        });
-                        fetchAllRestaurants(
-                          radiusKm: searchRadius,
-                          onlyShowOpen: onlyShowOpen,
-                        );
-                      },
-                    ),
-                  ],
+              if (round == 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Row(
+                    children: [
+                      const Text("只顯示營業中"),
+                      Switch(
+                        value: onlyShowOpen,
+                        onChanged: (value) {
+                          setState(() {
+                            onlyShowOpen = value;
+                          });
+                          fetchAllRestaurants(
+                            radiusKm: searchRadius,
+                            onlyShowOpen: onlyShowOpen,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               if (currentLat != null && currentLng != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -878,318 +883,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               Expanded(
                 child: currentRoundList.isEmpty
                     ? Center(child: isLoading ? CircularProgressIndicator() : Text(_loadingText))
-                    : Stack(
-                        children: [
-                          GestureDetector(
-                            onPanStart: (details) {
-                               _dragStartPosition = details.localPosition;
-                            },
-                            onPanUpdate: (details) {
-                               if (_dragStartPosition == null) return;
-                               if (isTouchingImage) return;
-                               final screenWidth = MediaQuery.of(context).size.width;
-                               final dx = details.localPosition.dx - _dragStartPosition!.dx;
-                               final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
-                               const threshold = 10.0;
-                               if (dx < -threshold) {
-                                 handleSwipeUpdate(CardSwiperDirection.left, progress);
-                               } else if (dx > threshold) {
-                                 handleSwipeUpdate(CardSwiperDirection.right, progress);
-                               } else {
-                                 if (_showSwipeHint) {
-                                   _swipeAnimationController.reverse();
-                                 }
-                               }
-                            },
-                            onPanEnd: (_) {
-                              handleSwipeEnd();
-                            },
-                            onPanCancel: () {
-                              handleSwipeEnd();
-                            },
-                            child: CardSwiper(
-                              key: ValueKey(cardSwiperKey),
-                              cardsCount: currentRoundList.length,
-                              onSwipe: handleSwipe,
-                              cardBuilder: (context, index) {
-                                final restaurant = currentRoundList[index];
-                                double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
-                                List typesList = [];
-                                if (restaurant['types'] != null) {
-                                  try {
-                                    typesList = json.decode(restaurant['types']!);
-                                  } catch (_) {}
-                                }
-                                final String typeText = classifyRestaurant(typesList, restaurant);
-                                final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
-                                final String openStatus = getOpenStatus(restaurant);
-                                // 多圖輪播
-                                List<String> photoUrls = [];
-                                if (restaurant['photo_urls'] != null) {
-                                  try {
-                                    photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
-                                  } catch (_) {}
-                                }
-                                if (photoUrls.isEmpty) {
-                                  photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
-                                }
-                                int currentPhotoIndex = photoPageIndex[index] ?? 0;
-                                return Card(
-                                  elevation: 10,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(18),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          height: 200,
-                                          child: Stack(
-                                            children: [
-                                              // GestureDetector 包裹圖片區域
-                                              GestureDetector(
-                                                onPanDown: (_) {
-                                                  setState(() {
-                                                    isTouchingImage = true;
-                                                  });
-                                                },
-                                                onPanEnd: (_) {
-                                                  setState(() {
-                                                    isTouchingImage = false;
-                                                  });
-                                                },
-                                                onPanCancel: () {
-                                                  setState(() {
-                                                    isTouchingImage = false;
-                                                  });
-                                                },
-                                                child: PageView.builder(
-                                                  itemCount: photoUrls.length,
-                                                  controller: PageController(initialPage: currentPhotoIndex),
-                                                  onPageChanged: (idx) {
-                                                    setState(() {
-                                                      photoPageIndex[index] = idx;
-                                                    });
-                                                  },
-                                                  itemBuilder: (context, idx) {
-                                                    return ClipRRect(
-                                                      borderRadius: BorderRadius.circular(18),
-                                                      child: CachedNetworkImage(
-                                                        imageUrl: photoUrls[idx],
-                                                        height: 200,
-                                                        width: double.infinity,
-                                                        fit: BoxFit.cover,
-                                                        placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
-                                                        errorWidget: (context, url, error) => Container(
-                                                          color: Colors.grey[200],
-                                                          height: 200,
-                                                          child: const Center(child: Icon(Icons.error, color: Colors.red)),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                              // 指示條
-                                              if (photoUrls.length > 1)
-                                                Positioned(
-                                                  bottom: 10,
-                                                  left: 0,
-                                                  right: 0,
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: List.generate(photoUrls.length, (dotIdx) => Container(
-                                                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                                                      width: 8,
-                                                      height: 8,
-                                                      decoration: BoxDecoration(
-                                                        color: currentPhotoIndex == dotIdx ? Colors.white : Colors.white54,
-                                                        shape: BoxShape.circle,
-                                                        border: Border.all(color: Colors.black12),
-                                                      ),
-                                                    )),
-                                                  ),
-                                                ),
-                                              // 餐廳名稱與營業狀態
-                                              Positioned(
-                                                left: 16,
-                                                bottom: 16,
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.5),
-                                                    borderRadius: BorderRadius.circular(12),
-                                                  ),
-                                                  child: Row(
-                                                    children: [
-                                                      Text(
-                                                        restaurant['name'] ?? '未知餐廳',
-                                                        style: const TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight: FontWeight.bold,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Text(
-                                                        openStatus,
-                                                        style: const TextStyle(fontSize: 18, color: Colors.white),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        // 新增：卡片下方資訊區包 GestureDetector
-                                        GestureDetector(
-                                          onPanStart: (details) {
-                                            _dragStartPosition = details.localPosition;
-                                          },
-                                          onPanUpdate: (details) {
-                                            if (_dragStartPosition == null) return;
-                                            final screenWidth = MediaQuery.of(context).size.width;
-                                            final dx = details.localPosition.dx - _dragStartPosition!.dx;
-                                            final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
-                                            const threshold = 10.0;
-                                            if (dx < -threshold) {
-                                              handleSwipeUpdate(CardSwiperDirection.left, progress);
-                                            } else if (dx > threshold) {
-                                              handleSwipeUpdate(CardSwiperDirection.right, progress);
-                                            } else {
-                                              if (_showSwipeHint) {
-                                                _swipeAnimationController.reverse();
-                                              }
-                                            }
-                                          },
-                                          onPanEnd: (_) {
-                                            handleSwipeEnd();
-                                          },
-                                          onPanCancel: () {
-                                            handleSwipeEnd();
-                                          },
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const SizedBox(height: 18),
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.star, color: Colors.amber, size: 20),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    ratingText,
-                                                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                                  ),
-                                                  const SizedBox(width: 18),
-                                                  const Icon(Icons.place, color: Colors.blueGrey, size: 20),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    dist >= 1000
-                                                        ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km (直線)'
-                                                        : '${dist.toStringAsFixed(0)} m (直線)',
-                                                    style: const TextStyle(fontSize: 16, color: Colors.black54),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 10),
-                                              Text(
-                                                typeText,
-                                                style: const TextStyle(fontSize: 15, color: Colors.grey),
-                                              ),
-                                              const SizedBox(height: 10),
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.end,
-                                                children: [
-                                                  IconButton(
-                                                    icon: Icon(
-                                                      favorites.contains(restaurant['name'] ?? '')
-                                                          ? Icons.star
-                                                          : Icons.star_border,
-                                                      color: Colors.amber,
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        String name = restaurant['name'] ?? '';
-                                                        if (favorites.contains(name)) {
-                                                          favorites.remove(name);
-                                                        } else {
-                                                          favorites.add(name);
-                                                        }
-                                                        saveFavorites();
-                                                      });
-                                                    },
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  IconButton(
-                                                    icon: const Icon(Icons.navigation, color: Colors.deepPurple),
-                                                    onPressed: () {
-                                                      openMap(
-                                                        restaurant['lat'] ?? '',
-                                                        restaurant['lng'] ?? '',
-                                                        restaurant['name'] ?? '',
-                                                      );
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          // 滑動提示文字
-                          if (_showSwipeHint)
-                            AnimatedBuilder(
-                              animation: _swipeAnimationController,
-                              builder: (context, child) {
-                                return Positioned(
-                                  top: 20,
-                                  left: _isSwipingLeft ? 20 : null,
-                                  right: !_isSwipingLeft ? 20 : null,
-                                  child: SlideTransition(
-                                    position: _swipePositionAnimation,
-                                    child: FadeTransition(
-                                      opacity: _swipeOpacityAnimation,
-                                      child: ScaleTransition(
-                                        scale: _swipeScaleAnimation,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                          decoration: BoxDecoration(
-                                            color: _swipeHintColor.withOpacity(0.9),
-                                            borderRadius: BorderRadius.circular(20),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(0.2),
-                                                blurRadius: 8,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Text(
-                                            _swipeHintText,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                        ],
-                      ),
+                    : round == 3 
+                        ? _buildRound3GridView()
+                        : _buildSwipeCardView(),
               ),
             ],
           ),
@@ -1274,8 +970,881 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       _round2Title = _round2Titles[random.nextInt(_round2Titles.length)];
     });
   }
+
+  void _rollDice() async {
+    if (currentRoundList.isEmpty) return;
+    
+    setState(() {
+      _isRollingDice = true;
+    });
+    
+    // 模擬骰子滾動動畫
+    await Future.delayed(const Duration(milliseconds: 1500));
+    
+    final random = Random();
+    final selectedIndex = random.nextInt(currentRoundList.length);
+    final selectedRestaurant = currentRoundList[selectedIndex];
+    
+    setState(() {
+      _isRollingDice = false;
+      _selectedRestaurant = selectedRestaurant;
+    });
+    
+    // 顯示結果對話框
+    if (mounted) {
+      _showDiceResultDialog(selectedRestaurant);
+    }
+  }
+
+  void _showDiceResultDialog(Map<String, String> restaurant) {
+    double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+    final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+    
+    // 多圖輪播
+    List<String> photoUrls = [];
+    if (restaurant['photo_urls'] != null) {
+      try {
+        photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+      } catch (_) {}
+    }
+    if (photoUrls.isEmpty) {
+      photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 標題
+                Row(
+                  children: [
+                    const Text('🎲', style: TextStyle(fontSize: 24)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '骰子選擇結果',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // 餐廳圖片
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CachedNetworkImage(
+                    imageUrl: photoUrls.first,
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[200],
+                      height: 150,
+                      child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // 餐廳名稱
+                Text(
+                  restaurant['name'] ?? '未知餐廳',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                // 評分和距離
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      ratingText,
+                      style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.place, color: Colors.blueGrey, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      dist >= 1000
+                          ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
+                          : '${dist.toStringAsFixed(0)} m',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // 按鈕
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          openMap(
+                            restaurant['lat'] ?? '',
+                            restaurant['lng'] ?? '',
+                            restaurant['name'] ?? '',
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('導航到這裡'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _rollDice(); // 重新骰子
+                        },
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text('再骰一次'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('取消'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRound3GridView() {
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: currentRoundList.length,
+            itemBuilder: (context, index) {
+              final restaurant = currentRoundList[index];
+              double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+              List typesList = [];
+              if (restaurant['types'] != null) {
+                try {
+                  typesList = json.decode(restaurant['types']!);
+                } catch (_) {}
+              }
+              final String typeText = classifyRestaurant(typesList, restaurant);
+              final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+              final String openStatus = getOpenStatus(restaurant);
+              
+              // 多圖輪播
+              List<String> photoUrls = [];
+              if (restaurant['photo_urls'] != null) {
+                try {
+                  photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+                } catch (_) {}
+              }
+              if (photoUrls.isEmpty) {
+                photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
+              }
+
+              return Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RestaurantDetailPage(
+                          restaurant: restaurant,
+                          favorites: favorites,
+                          onToggleFavorite: (String name) {
+                            setState(() {
+                              if (favorites.contains(name)) {
+                                favorites.remove(name);
+                              } else {
+                                favorites.add(name);
+                              }
+                              saveFavorites();
+                            });
+                          },
+                          classifyRestaurant: classifyRestaurant,
+                          getOpenStatus: getOpenStatus,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 圖片區域
+                      Expanded(
+                        flex: 3,
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                              child: CachedNetworkImage(
+                                imageUrl: photoUrls.first,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                                ),
+                              ),
+                            ),
+                            // 營業狀態
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  openStatus,
+                                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                            // 收藏按鈕
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    favorites.contains(restaurant['name'] ?? '')
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: Colors.amber,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      String name = restaurant['name'] ?? '';
+                                      if (favorites.contains(name)) {
+                                        favorites.remove(name);
+                                      } else {
+                                        favorites.add(name);
+                                      }
+                                      saveFavorites();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 資訊區域
+                      Expanded(
+                        flex: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 餐廳名稱
+                              Text(
+                                restaurant['name'] ?? '未知餐廳',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              // 評分和距離
+                              Row(
+                                children: [
+                                  const Icon(Icons.star, color: Colors.amber, size: 14),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    ratingText,
+                                    style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.place, color: Colors.blueGrey, size: 14),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    dist >= 1000
+                                        ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')}km'
+                                        : '${dist.toStringAsFixed(0)} m',
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              // 餐廳類型
+                              Text(
+                                typeText,
+                                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // 浮動骰子按鈕
+        Positioned(
+          bottom: 20,
+          right: 20,
+          child: FloatingActionButton(
+            onPressed: _isRollingDice ? null : _rollDice,
+            backgroundColor: Colors.deepPurple,
+            foregroundColor: Colors.white,
+            child: _isRollingDice
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    '🎲',
+                    style: TextStyle(fontSize: 24),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSwipeCardView() {
+    return Stack(
+      children: [
+        GestureDetector(
+          onPanStart: (details) {
+             _dragStartPosition = details.localPosition;
+          },
+          onPanUpdate: (details) {
+             if (_dragStartPosition == null) return;
+             if (isTouchingImage) return;
+             final screenWidth = MediaQuery.of(context).size.width;
+             final dx = details.localPosition.dx - _dragStartPosition!.dx;
+             final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
+             const threshold = 10.0;
+             if (dx < -threshold) {
+               handleSwipeUpdate(CardSwiperDirection.left, progress);
+             } else if (dx > threshold) {
+               handleSwipeUpdate(CardSwiperDirection.right, progress);
+             } else {
+               if (_showSwipeHint) {
+                 _swipeAnimationController.reverse();
+               }
+             }
+          },
+          onPanEnd: (_) {
+            handleSwipeEnd();
+          },
+          onPanCancel: () {
+            handleSwipeEnd();
+          },
+          child: CardSwiper(
+            key: ValueKey(cardSwiperKey),
+            cardsCount: currentRoundList.length,
+            onSwipe: handleSwipe,
+            cardBuilder: (context, index) {
+              final restaurant = currentRoundList[index];
+              double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+              List typesList = [];
+              if (restaurant['types'] != null) {
+                try {
+                  typesList = json.decode(restaurant['types']!);
+                } catch (_) {}
+              }
+              final String typeText = classifyRestaurant(typesList, restaurant);
+              final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+              final String openStatus = getOpenStatus(restaurant);
+              // 多圖輪播
+              List<String> photoUrls = [];
+              if (restaurant['photo_urls'] != null) {
+                try {
+                  photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+                } catch (_) {}
+              }
+              if (photoUrls.isEmpty) {
+                photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
+              }
+              int currentPhotoIndex = photoPageIndex[index] ?? 0;
+              return Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 200,
+                        child: Stack(
+                          children: [
+                            // GestureDetector 包裹圖片區域
+                            GestureDetector(
+                              onPanDown: (_) {
+                                setState(() {
+                                  isTouchingImage = true;
+                                });
+                              },
+                              onPanEnd: (_) {
+                                setState(() {
+                                  isTouchingImage = false;
+                                });
+                              },
+                              onPanCancel: () {
+                                setState(() {
+                                  isTouchingImage = false;
+                                });
+                              },
+                              child: PageView.builder(
+                                itemCount: photoUrls.length,
+                                controller: PageController(initialPage: currentPhotoIndex),
+                                onPageChanged: (idx) {
+                                  setState(() {
+                                    photoPageIndex[index] = idx;
+                                  });
+                                },
+                                itemBuilder: (context, idx) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: CachedNetworkImage(
+                                      imageUrl: photoUrls[idx],
+                                      height: 200,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Center(child: SizedBox(width: 32, height: 32, child: CircularProgressIndicator(strokeWidth: 2))),
+                                      errorWidget: (context, url, error) => Container(
+                                        color: Colors.grey[200],
+                                        height: 200,
+                                        child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            // 指示條
+                            if (photoUrls.length > 1)
+                              Positioned(
+                                bottom: 10,
+                                left: 0,
+                                right: 0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(photoUrls.length, (dotIdx) => Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: currentPhotoIndex == dotIdx ? Colors.white : Colors.white54,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.black12),
+                                    ),
+                                  )),
+                                ),
+                              ),
+                            // 餐廳名稱與營業狀態
+                            Positioned(
+                              left: 16,
+                              bottom: 16,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      restaurant['name'] ?? '未知餐廳',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      openStatus,
+                                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 新增：卡片下方資訊區包 GestureDetector
+                      GestureDetector(
+                        onPanStart: (details) {
+                          _dragStartPosition = details.localPosition;
+                        },
+                        onPanUpdate: (details) {
+                          if (_dragStartPosition == null) return;
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final dx = details.localPosition.dx - _dragStartPosition!.dx;
+                          final progress = (dx.abs() / (screenWidth / 4)).clamp(0.0, 1.0);
+                          const threshold = 10.0;
+                          if (dx < -threshold) {
+                            handleSwipeUpdate(CardSwiperDirection.left, progress);
+                          } else if (dx > threshold) {
+                            handleSwipeUpdate(CardSwiperDirection.right, progress);
+                          } else {
+                            if (_showSwipeHint) {
+                              _swipeAnimationController.reverse();
+                            }
+                          }
+                        },
+                        onPanEnd: (_) {
+                          handleSwipeEnd();
+                        },
+                        onPanCancel: () {
+                          handleSwipeEnd();
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                const Icon(Icons.star, color: Colors.amber, size: 20),
+                                const SizedBox(width: 4),
+                                Text(
+                                  ratingText,
+                                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                ),
+                                const SizedBox(width: 18),
+                                const Icon(Icons.place, color: Colors.blueGrey, size: 20),
+                                const SizedBox(width: 4),
+                                Text(
+                                  dist >= 1000
+                                      ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km (直線)'
+                                      : '${dist.toStringAsFixed(0)} m (直線)',
+                                  style: const TextStyle(fontSize: 16, color: Colors.black54),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              typeText,
+                              style: const TextStyle(fontSize: 15, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    favorites.contains(restaurant['name'] ?? '')
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: Colors.amber,
+                                  ),
+                                  onPressed: () {
+                                    // 這裡需要一個回調來更新收藏狀態
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.navigation, color: Colors.deepPurple),
+                                  onPressed: () {
+                                    openMap(
+                                      restaurant['lat'] ?? '',
+                                      restaurant['lng'] ?? '',
+                                      restaurant['name'] ?? '',
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        // 滑動提示文字
+        if (_showSwipeHint)
+          AnimatedBuilder(
+            animation: _swipeAnimationController,
+            builder: (context, child) {
+              return Positioned(
+                top: 20,
+                left: _isSwipingLeft ? 20 : null,
+                right: !_isSwipingLeft ? 20 : null,
+                child: SlideTransition(
+                  position: _swipePositionAnimation,
+                  child: FadeTransition(
+                    opacity: _swipeOpacityAnimation,
+                    child: ScaleTransition(
+                      scale: _swipeScaleAnimation,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _swipeHintColor.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          _swipeHintText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+  }
 }
 
-double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-  return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+class RestaurantDetailPage extends StatelessWidget {
+  final Map<String, String> restaurant;
+  final Set<String> favorites;
+  final Function(String) onToggleFavorite;
+  final Function(List, Map<String, String>) classifyRestaurant;
+  final Function(Map<String, String>) getOpenStatus;
+  
+  const RestaurantDetailPage({
+    super.key, 
+    required this.restaurant,
+    required this.favorites,
+    required this.onToggleFavorite,
+    required this.classifyRestaurant,
+    required this.getOpenStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
+    List typesList = [];
+    if (restaurant['types'] != null) {
+      try {
+        typesList = json.decode(restaurant['types']!);
+      } catch (_) {}
+    }
+    final String typeText = classifyRestaurant(typesList, restaurant);
+    final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
+    final String openStatus = getOpenStatus(restaurant);
+    
+    // 多圖輪播
+    List<String> photoUrls = [];
+    if (restaurant['photo_urls'] != null) {
+      try {
+        photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+      } catch (_) {}
+    }
+    if (photoUrls.isEmpty) {
+      photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(restaurant['name'] ?? '餐廳詳情'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+        actions: [
+          IconButton(
+            icon: Icon(
+              favorites.contains(restaurant['name'] ?? '')
+                  ? Icons.star
+                  : Icons.star_border,
+              color: Colors.amber,
+            ),
+            onPressed: () {
+              onToggleFavorite(restaurant['name'] ?? '');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.navigation, color: Colors.deepPurple),
+            onPressed: () {
+              openMap(
+                restaurant['lat'] ?? '',
+                restaurant['lng'] ?? '',
+                restaurant['name'] ?? '',
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 圖片輪播
+            SizedBox(
+              height: 250,
+              child: PageView.builder(
+                itemCount: photoUrls.length,
+                itemBuilder: (context, index) {
+                  return CachedNetworkImage(
+                    imageUrl: photoUrls[index],
+                    height: 250,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[200],
+                      height: 250,
+                      child: const Center(child: Icon(Icons.error, color: Colors.red)),
+                    ),
+                  );
+                },
+              ),
+            ),
+            // 餐廳資訊
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          restaurant['name'] ?? '未知餐廳',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        openStatus,
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 20),
+                      const SizedBox(width: 4),
+                      Text(
+                        ratingText,
+                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
+                      const SizedBox(width: 18),
+                      const Icon(Icons.place, color: Colors.blueGrey, size: 20),
+                      const SizedBox(width: 4),
+                      Text(
+                        dist >= 1000
+                            ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km (直線)'
+                            : '${dist.toStringAsFixed(0)} m (直線)',
+                        style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    typeText,
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Future<void> openMap(String lat, String lng, String label) async {
+    final url = 'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving&destination_place_id=$label';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 }
