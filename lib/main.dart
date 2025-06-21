@@ -580,10 +580,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           divisions: 9,
                           value: searchRadius,
                           onChanged: (value) => setState(() => searchRadius = value),
-                          onChangeEnd: (value) => fetchAllRestaurants(
-                            radiusKm: value,
-                            onlyShowOpen: onlyShowOpen,
-                          ),
+                          onChangeEnd: (value) {
+                            fetchAllRestaurants(
+                              radiusKm: value,
+                              onlyShowOpen: onlyShowOpen,
+                            );
+                          },
                         ),
                       ),
                     ),
