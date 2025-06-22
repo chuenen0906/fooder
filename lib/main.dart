@@ -173,27 +173,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     print("- Place Photos: $photoRequestCount times");
   }
 
-  // 清除快取並重新載入
-  Future<void> clearCacheAndReload() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('restaurant_cache');
-    await prefs.remove('cache_timestamp');
-    await prefs.remove('cache_lat');
-    await prefs.remove('cache_lng');
-    await prefs.remove('cache_radius');
-    print("🗑️ Cache cleared, will make new API requests");
-    
-    // 重置計數器
-    setState(() {
-      nearbySearchCount = 0;
-      placeDetailsCount = 0;
-      photoRequestCount = 0;
-    });
-    
-    // 重新載入餐廳資料
-    fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: onlyShowOpen);
-  }
-
   Future<void> loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -794,11 +773,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             icon: const Icon(Icons.analytics),
             tooltip: "API 使用量摘要",
             onPressed: printApiSummary,
-          ),
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            tooltip: "清除快取並重新載入",
-            onPressed: clearCacheAndReload,
           ),
         ],
       ),
