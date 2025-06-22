@@ -39,7 +39,7 @@ class NearbyFoodSwipePage extends StatefulWidget {
 }
 
 class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
-  final String apiKey = 'AIzaSyBIpVO_TbDbwMxdN-nG3TZXFbCY7PhA6pY'; // Reverted for easier execution
+  final String apiKey = 'YOUR_API_KEY_HERE'; // Reverted for easier execution
   List<Map<String, String>> fullRestaurantList = [];
   List<Map<String, String>> currentRoundList = [];
   final List<String> liked = [];
