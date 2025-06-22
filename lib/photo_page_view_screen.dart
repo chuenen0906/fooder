@@ -10,7 +10,7 @@ class PhotoPageViewScreen extends StatelessWidget {
   }) : super(key: key);
 
   String getPhotoUrl(String reference) {
-    const apiKey = 'YOUR_API_KEY_HERE'; 
+    const apiKey = 'AIzaSyC6lBQ-jkslOR2LDkHm0q8KW4Yg9crzcHE'; 
     return 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$reference&key=$apiKey';
   }
 

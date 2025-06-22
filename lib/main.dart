@@ -39,7 +39,7 @@ class NearbyFoodSwipePage extends StatefulWidget {
 }
 
 class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
-  final String apiKey = 'YOUR_API_KEY_HERE'; // Reverted for easier execution
+  final String apiKey = 'AIzaSyBIpVO_TbDbwMxdN-nG3TZXFbCY7PhA6pY'; // Reverted for easier execution
   List<Map<String, String>> fullRestaurantList = [];
   List<Map<String, String>> currentRoundList = [];
   final List<String> liked = [];
@@ -57,6 +57,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   bool hasMore = true;
   Map<int, int> photoPageIndex = {}; // key: 卡片index, value: 圖片index
   String _loadingText = '';
+
+  // API 使用量追蹤變數
+  int nearbySearchCount = 0;
+  int placeDetailsCount = 0;
+  int photoRequestCount = 0;
 
   // 滑動提示文字動畫相關變數
   late AnimationController _swipeAnimationController;
@@ -160,6 +165,35 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     super.dispose();
   }
 
+  // API 使用量摘要打印函數
+  void printApiSummary() {
+    print("🔢 API Usage Summary:");
+    print("- Nearby Search: $nearbySearchCount times");
+    print("- Place Details: $placeDetailsCount times");
+    print("- Place Photos: $photoRequestCount times");
+  }
+
+  // 清除快取並重新載入
+  Future<void> clearCacheAndReload() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('restaurant_cache');
+    await prefs.remove('cache_timestamp');
+    await prefs.remove('cache_lat');
+    await prefs.remove('cache_lng');
+    await prefs.remove('cache_radius');
+    print("🗑️ Cache cleared, will make new API requests");
+    
+    // 重置計數器
+    setState(() {
+      nearbySearchCount = 0;
+      placeDetailsCount = 0;
+      photoRequestCount = 0;
+    });
+    
+    // 重新載入餐廳資料
+    fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: onlyShowOpen);
+  }
+
   Future<void> loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -173,12 +207,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   Future<bool> canSearchToday() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final key = 'search_count_$today';
-
-    final count = prefs.getInt(key) ?? 0;
-    return count < 4;
+    return true;
   }
 
   Future<void> incrementSearchCount() async {
@@ -199,26 +228,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   Future<void> fetchAllRestaurants({double radiusKm = 5, bool onlyShowOpen = true}) async {
     final prefs = await SharedPreferences.getInstance();
-    
-    // 檢查每日使用限制
-    if (!await canSearchToday()) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text("今日搜尋次數已達上限"),
-            content: const Text("您今天已經搜尋了 4 次，請明天再來使用。\n\n為了控制 API 成本，我們限制了每日搜尋次數。"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("確定"),
-              ),
-            ],
-          ),
-        );
-      }
-      return;
-    }
     
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -248,6 +257,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         
         // Use cache ONLY if both location and radius are the same
         if (distance < 500 && (radiusKm - cachedRadius).abs() < 0.1) {
+          print("📦 Using nearby cache (distance: ${distance.toStringAsFixed(0)}m, radius: $radiusKm km)");
           final List<dynamic> decodedData = jsonDecode(cachedDataString);
           final cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
           if(mounted) {
@@ -271,6 +281,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           // 但是搜尋半徑改變時不使用快取
           if (now - cachedTimestamp < 4 * 60 * 60 * 1000 && 
               (cachedRadius == null || (radiusKm - cachedRadius).abs() < 0.1)) {
+            print("📦 Using time cache (${((now - cachedTimestamp) / (60 * 60 * 1000)).toStringAsFixed(1)} hours old)");
             final List<dynamic> decodedData = jsonDecode(cachedDataString);
             cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
             if (mounted && cachedRestaurants.isNotEmpty) {
@@ -299,7 +310,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       
       // 如果需要進行 API 呼叫，增加搜尋計數
       if (needApiCall) {
-        await incrementSearchCount();
         if (mounted) {
           setState(() { isLoading = true; _loadingText = '正在更新餐廳列表...'; });
         }
@@ -410,11 +420,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     do {
       String url;
       if (nextPageToken == null) {
+        nearbySearchCount++;
+        print("📡 Nearby Search called: $nearbySearchCount times");
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
             'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
       } else {
         // As per Google's requirement, wait before making the next page request.
         await Future.delayed(const Duration(seconds: 2));
+        nearbySearchCount++;
+        print("📡 Nearby Search called: $nearbySearchCount times");
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
             'pagetoken=$nextPageToken&key=$apiKey';
       }
@@ -444,6 +458,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   Future<Map<String, String>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
     try {
+      placeDetailsCount++;
+      print("📍 Place Details called: $placeDetailsCount times");
       // 只請求必要的欄位，減少 API 成本
       const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity,user_ratings_total';
       final String detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=$fields&key=$apiKey&language=zh-TW';
@@ -477,9 +493,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           cachedPhotoUrl = _photoCache[photoRef];
         }
         
-        final photoUrls = photoReferences.take(2).map((ref) => 
-          cachedPhotoUrl ?? 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'
-        ).toList();
+        final photoUrls = photoReferences.take(2).map((ref) {
+          if (cachedPhotoUrl == null) {
+            photoRequestCount++;
+            print("🖼️ Place Photo requested: $photoRequestCount times");
+          }
+          return cachedPhotoUrl ?? 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey';
+        }).toList();
 
         final photoUrl = photoUrls.isNotEmpty
             ? photoUrls.first
@@ -720,44 +740,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         foregroundColor: Colors.black,
         elevation: 1,
         actions: [
-          // 今日剩餘搜尋次數
-          FutureBuilder<int>(
-            future: getTodaySearchCount(),
-            builder: (context, snapshot) {
-              final count = snapshot.data ?? 0;
-              final remaining = 4 - count;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: remaining > 0 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: remaining > 0 ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.search,
-                      size: 16,
-                      color: remaining > 0 ? Colors.green : Colors.red,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$remaining',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: remaining > 0 ? Colors.green : Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.star),
             tooltip: "查看收藏",
@@ -807,6 +789,16 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             icon: const Icon(Icons.fast_forward),
             tooltip: "進入下一輪",
             onPressed: enterNextRound,
+          ),
+          IconButton(
+            icon: const Icon(Icons.analytics),
+            tooltip: "API 使用量摘要",
+            onPressed: printApiSummary,
+          ),
+          IconButton(
+            icon: const Icon(Icons.clear_all),
+            tooltip: "清除快取並重新載入",
+            onPressed: clearCacheAndReload,
           ),
         ],
       ),
