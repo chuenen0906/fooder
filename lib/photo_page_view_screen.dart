@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PhotoPageViewScreen extends StatelessWidget {
   final List<String> photoReferences;
@@ -24,15 +25,17 @@ class PhotoPageViewScreen extends StatelessWidget {
         controller: controller,
         itemCount: photoReferences.length,
         itemBuilder: (context, index) {
-          return Image.network(
-            getPhotoUrl(photoReferences[index]),
+          return CachedNetworkImage(
+            imageUrl: getPhotoUrl(photoReferences[index]),
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            loadingBuilder: (context, child, progress) =>
-                progress == null ? child : const Center(child: CircularProgressIndicator()),
-            errorBuilder: (context, error, stackTrace) =>
-                const Center(child: Text('載入失敗')),
+            placeholder: (context, url) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            errorWidget: (context, url, error) => const Center(
+              child: Text('載入失敗'),
+            ),
           );
         },
       ),

@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,7 +55,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   bool isLoading = true;
   bool isSplash = true;
   bool hasMore = true;
-  bool showLocation = false;
   Map<int, int> photoPageIndex = {}; // key: 卡片index, value: 圖片index
   String _loadingText = '';
 
@@ -172,8 +172,53 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     await prefs.setStringList('favorites', favorites.toList());
   }
 
+  Future<bool> canSearchToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final key = 'search_count_$today';
+
+    final count = prefs.getInt(key) ?? 0;
+    return count < 4;
+  }
+
+  Future<void> incrementSearchCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final key = 'search_count_$today';
+
+    final count = prefs.getInt(key) ?? 0;
+    await prefs.setInt(key, count + 1);
+  }
+
+  Future<int> getTodaySearchCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final key = 'search_count_$today';
+    return prefs.getInt(key) ?? 0;
+  }
+
   Future<void> fetchAllRestaurants({double radiusKm = 5, bool onlyShowOpen = true}) async {
     final prefs = await SharedPreferences.getInstance();
+    
+    // 檢查每日使用限制
+    if (!await canSearchToday()) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text("今日搜尋次數已達上限"),
+            content: const Text("您今天已經搜尋了 4 次，請明天再來使用。\n\n為了控制 API 成本，我們限制了每日搜尋次數。"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("確定"),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
     
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -223,7 +268,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       if (cachedDataString != null && cachedTimestamp != null) {
           final now = DateTime.now().millisecondsSinceEpoch;
           // 延長快取時間到 4 小時，減少 API 請求
-          if (now - cachedTimestamp < 4 * 60 * 60 * 1000) {
+          // 但是搜尋半徑改變時不使用快取
+          if (now - cachedTimestamp < 4 * 60 * 60 * 1000 && 
+              (cachedRadius == null || (radiusKm - cachedRadius).abs() < 0.1)) {
             final List<dynamic> decodedData = jsonDecode(cachedDataString);
             cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
             if (mounted && cachedRestaurants.isNotEmpty) {
@@ -240,6 +287,22 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
       if (mounted && cachedRestaurants.isEmpty) {
         setState(() { isLoading = true; _loadingText = '正在更新餐廳列表...'; });
+      }
+
+      // 檢查是否需要進行 API 呼叫
+      bool needApiCall = cachedRestaurants.isEmpty;
+      
+      // 如果搜尋半徑改變，也需要進行 API 呼叫
+      if (cachedRadius != null && (radiusKm - cachedRadius).abs() >= 0.1) {
+        needApiCall = true;
+      }
+      
+      // 如果需要進行 API 呼叫，增加搜尋計數
+      if (needApiCall) {
+        await incrementSearchCount();
+        if (mounted) {
+          setState(() { isLoading = true; _loadingText = '正在更新餐廳列表...'; });
+        }
       }
 
       final newRestaurants = await _fetchFromApi(
@@ -657,6 +720,44 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         foregroundColor: Colors.black,
         elevation: 1,
         actions: [
+          // 今日剩餘搜尋次數
+          FutureBuilder<int>(
+            future: getTodaySearchCount(),
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? 0;
+              final remaining = 4 - count;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: remaining > 0 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: remaining > 0 ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.search,
+                      size: 16,
+                      color: remaining > 0 ? Colors.green : Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$remaining',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: remaining > 0 ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.star),
             tooltip: "查看收藏",
@@ -692,12 +793,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 liked.clear();
                 cardSwiperKey++;
                 selectedIndex = 0;
+                // 重新打亂餐廳列表順序
+                if (fullRestaurantList.isNotEmpty) {
+                  currentRoundList = List.from(fullRestaurantList)..shuffle();
+                }
               });
               // 更新隨機標題
               _updateRound1Title();
               _updateRound2Title();
-              // 重新載入餐廳資料
-              fetchAllRestaurants(radiusKm: searchRadius);
             },
           ),
           IconButton(
@@ -837,78 +940,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                         },
                       ),
                     ],
-                  ),
-                ),
-              if (currentLat != null && currentLng != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => setState(() => showLocation = !showLocation),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: showLocation ? Colors.deepPurple.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  showLocation ? Icons.location_on : Icons.location_off,
-                                  size: 20,
-                                  color: showLocation ? Colors.deepPurple : Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      showLocation ? '隱藏定位' : '顯示目前定位',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: showLocation ? Colors.deepPurple : Colors.grey[700],
-                                      ),
-                                    ),
-                                    if (showLocation)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 4.0),
-                                        child: Text(
-                                          '目前定位：${currentLat?.toStringAsFixed(6) ?? 'N/A'}, ${currentLng?.toStringAsFixed(6) ?? 'N/A'}',
-                                          style: const TextStyle(fontSize: 11, color: Colors.grey),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                showLocation ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                color: Colors.grey[600],
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
                 ),
               Expanded(
