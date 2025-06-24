@@ -31,6 +31,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/loading_pig.png
+    - .env
 
 flutter_launcher_icons:
   android: true

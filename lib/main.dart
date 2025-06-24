@@ -10,8 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async {
+  await dotenv.load();
   runApp(const MyApp());
 }
 
@@ -39,7 +41,7 @@ class NearbyFoodSwipePage extends StatefulWidget {
 }
 
 class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
-  final String apiKey = 'AIzaSyAVQJzzyTQbogOW17e69oWkzD7ecSsArmc'; // 已更新 API key
+  final String apiKey = dotenv.env['GOOGLE_API_KEY'] ?? ''; // 已更新 API key
   List<Map<String, String>> fullRestaurantList = [];
   List<Map<String, String>> currentRoundList = [];
   final List<String> liked = [];
@@ -519,17 +521,16 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     double centerLat = position.latitude;
     double centerLng = position.longitude;
 
-    List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
+    // 只取前10個 placeId
+    List<String> placeIds = (await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen)).take(10).toList();
 
     List<Future<Map<String, String>?>> detailFutures = [];
     for (final placeId in placeIds) {
       if (_placeDetailsCache.containsKey(placeId)) {
-        // 直接用快取資料
         final cachedJson = _placeDetailsCache[placeId]!;
         final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
         detailFutures.add(Future.value(decodedDetails.map((key, value) => MapEntry(key, value.toString()))));
       } else {
-        // 只查沒快取的
         detailFutures.add(_fetchPlaceDetails(placeId, centerLat, centerLng));
       }
     }
@@ -643,32 +644,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
         if (item == null) return null;
 
-        // 【暫時停用】類型過濾器，以解決找不到店家的問題
-        // final List<dynamic> types = item['types'] ?? [];
-        // const List<String> excludedTypes = ['bakery', 'cafe', 'bar'];
-        // if (types.any((type) => excludedTypes.contains(type.toString()))) {
-        //   return null;
-        // }
-
         final photoReferences = item['photos'] != null && item['photos'].isNotEmpty
             ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
             : <String>[];
 
-        // 優化：使用照片 URL 快取
+        // 只取第一張照片
         List<String> photoUrls = [];
-        if (_photoUrlCache.containsKey(placeId)) {
-          photoUrls = _photoUrlCache[placeId]!;
-          print('✅ Using cached photo URLs for $placeId');
-        } else {
-          photoUrls = photoReferences.take(2).map((ref) {
-            photoRequestCount++;
-            print("🖼️ Place Photo requested: $photoRequestCount times");
-            return 'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey';
-          }).toList();
-          
-          // 儲存到快取
-          _photoUrlCache[placeId] = photoUrls;
-          _savePhotoUrlCache();
+        if (photoReferences.isNotEmpty) {
+          final ref = photoReferences.first;
+          photoRequestCount++;
+          print("🖼️ Place Photo requested: $photoRequestCount times");
+          photoUrls = ['https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'];
         }
 
         final photoUrl = photoUrls.isNotEmpty
@@ -686,7 +672,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           'open_now': (item['opening_hours']?['open_now']?.toString()) ?? 'unknown',
           'photo_references': json.encode(photoReferences),
           'place_id': item['place_id'] ?? '',
-          'photo_urls': json.encode(photoUrls.isNotEmpty ? photoUrls : [photoUrl]),
+          'photo_urls': json.encode(photoUrls), // 只存一張
         };
 
         // 3. 存入快取
