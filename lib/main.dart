@@ -131,7 +131,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   // Place Details 獨立快取
   Map<String, String> _placeDetailsCache = {};
   final String _placeDetailsCacheKey = 'place_details_cache';
-  final int _maxCacheSize = 5000; // 快取最多儲存 5000 筆餐廳資料
+  // 移除重複宣告，使用智慧快取策略中的 _maxCacheSize
   
   // API 成本監控
   int _apiCallCount = 0;
@@ -146,6 +146,44 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   // 新增：開發模式開關 - 關閉照片載入以節省 API 用量
   bool _disablePhotosForTesting = true; // 設為 true 可節省 API 用量
+  
+  // 新增：可調整的餐廳搜尋數量
+  int _targetRestaurantCount = 15; // 調整為15間餐廳
+  
+  // 新增：快取優化設定
+  final int _cacheExpirationHours = 24; // 延長快取時間到24小時
+  final int _locationCacheDistance = 1000; // 位置快取距離增加到1公里
+
+  // 新增：智慧快取策略
+  Map<String, int> _restaurantAccessCount = {}; // 記錄餐廳被訪問次數
+  final int _maxCacheSize = 100; // 增加快取大小到100筆
+  
+  // 新增：快取優先級管理
+  void _updateRestaurantAccessCount(String placeId) {
+    _restaurantAccessCount[placeId] = (_restaurantAccessCount[placeId] ?? 0) + 1;
+  }
+  
+  // 新增：智慧快取清理
+  void _smartCacheCleanup() {
+    if (_placeDetailsCache.length > _maxCacheSize) {
+      // 根據訪問次數排序，保留最受歡迎的餐廳
+      final sortedEntries = _placeDetailsCache.entries.toList()
+        ..sort((a, b) {
+          final aCount = _restaurantAccessCount[a.key] ?? 0;
+          final bCount = _restaurantAccessCount[b.key] ?? 0;
+          return bCount.compareTo(aCount); // 降序排列
+        });
+      
+      // 移除最不受歡迎的餐廳
+      final toRemove = sortedEntries.skip(_maxCacheSize).map((e) => e.key).toList();
+      for (final placeId in toRemove) {
+        _placeDetailsCache.remove(placeId);
+        _restaurantAccessCount.remove(placeId);
+      }
+      
+      print('🧹 Smart cache cleanup: removed ${toRemove.length} unpopular restaurants');
+    }
+  }
 
   @override
   void initState() {
@@ -364,8 +402,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       if (cachedLat != null && cachedLng != null && cachedDataString != null && cachedRadius != null) {
         final distance = Geolocator.distanceBetween(cachedLat, cachedLng, currentPosition.latitude, currentPosition.longitude);
         
-        // Use cache ONLY if both location and radius are the same
-        if (distance < 500 && (radiusKm - cachedRadius).abs() < 0.1) {
+        // 使用快取：位置距離 < 1公里 且 搜尋半徑相同
+        if (distance < _locationCacheDistance && (radiusKm - cachedRadius).abs() < 0.1) {
           print("📦 Using nearby cache (distance: ${distance.toStringAsFixed(0)}m, radius: $radiusKm km)");
           final List<dynamic> decodedData = jsonDecode(cachedDataString);
           final cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
@@ -396,9 +434,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       final cachedTimestamp = prefs.getInt('cache_timestamp');
       if (cachedDataString != null && cachedTimestamp != null) {
           final now = DateTime.now().millisecondsSinceEpoch;
-          // 延長快取時間到 8 小時，大幅減少 API 請求
+          // 延長快取時間到 24 小時，大幅減少 API 請求
           // 但是搜尋半徑改變時不使用快取
-          if (now - cachedTimestamp < 8 * 60 * 60 * 1000 && 
+          if (now - cachedTimestamp < _cacheExpirationHours * 60 * 60 * 1000 && 
               (cachedRadius == null || (radiusKm - cachedRadius).abs() < 0.1)) {
             print("📦 Using time cache (${((now - cachedTimestamp) / (60 * 60 * 1000)).toStringAsFixed(1)} hours old)");
             final List<dynamic> decodedData = jsonDecode(cachedDataString);
@@ -422,9 +460,58 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       // 檢查是否需要進行 API 呼叫
       bool needApiCall = cachedRestaurants.isEmpty;
       
-      // 如果搜尋半徑改變，也需要進行 API 呼叫
+      // 如果搜尋半徑改變，檢查快取資料是否足夠
       if (cachedRadius != null && (radiusKm - cachedRadius).abs() >= 0.1) {
-        needApiCall = true;
+        // 如果快取中有足夠的餐廳資料（至少 20 家），只進行過濾
+        if (cachedRestaurants.length >= 20) {
+          print("🔄 Search radius changed from ${cachedRadius}km to ${radiusKm}km, filtering cached data (${cachedRestaurants.length} restaurants)");
+          needApiCall = false;
+          
+          // 直接過濾快取資料
+          final double searchRadiusMeters = radiusKm * 1000;
+          final filteredRestaurants = cachedRestaurants.where((r) {
+            double reCalculatedDistance = calculateDistance(
+              currentPosition.latitude, 
+              currentPosition.longitude, 
+              double.parse(r['lat'] ?? '0'), 
+              double.parse(r['lng'] ?? '0')
+            );
+            r['distance'] = reCalculatedDistance.toStringAsFixed(0);
+            return reCalculatedDistance <= searchRadiusMeters;
+          }).toList();
+          
+          // 排序
+          filteredRestaurants.sort((a, b) =>
+              (double.parse(a['distance'] ?? '999999'))
+                  .compareTo(double.parse(b['distance'] ?? '999999')));
+          
+          if (mounted) {
+            setState(() {
+              fullRestaurantList = filteredRestaurants;
+              currentRoundList = List.from(filteredRestaurants)..shuffle();
+              round = 1;
+              liked.clear();
+              cardSwiperKey++;
+              isLoading = false;
+              isSplash = false;
+              if (filteredRestaurants.isEmpty) {
+                _loadingText = onlyShowOpen
+                  ? '這個範圍內找不到營業中的餐廳耶 🥲\n試試看關閉「只顯示營業中」或擴大範圍吧！'
+                  : '這個範圍內找不到任何餐廳耶 🥲\n再擴大一點搜尋範圍試試看吧！';
+              } else {
+                _loadingText = '';
+              }
+            });
+            _updateRound1Title();
+          }
+          
+          // 更新快取中的搜尋半徑
+          await prefs.setDouble('cache_radius', radiusKm);
+          return; // 直接返回，不進行 API 呼叫
+        } else {
+          print("🔄 Search radius changed from ${cachedRadius}km to ${radiusKm}km, but cached data insufficient (${cachedRestaurants.length} restaurants), making API call");
+          needApiCall = true;
+        }
       }
       
       // 如果需要進行 API 呼叫，增加搜尋計數
@@ -552,7 +639,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Future<List<String>> _getPlaceIdsFromNearbySearch(double lat, double lng, double radius, bool onlyShowOpen) async {
     List<String> placeIds = [];
     String? nextPageToken;
-    final int targetCount = 10; // 目標數量：只需要10個
+    final int targetCount = _targetRestaurantCount; // 使用可調整的目標數量
 
     do {
       // 檢查 API 限制
@@ -628,6 +715,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     // 1. 優先從獨立快取讀取
     if (_placeDetailsCache.containsKey(placeId)) {
       print('✅ Using cached details for $placeId');
+      _updateRestaurantAccessCount(placeId); // 更新訪問次數
       final cachedJson = _placeDetailsCache[placeId]!;
       final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
       // 將 Map<String, dynamic> 轉為 Map<String, String>
@@ -923,109 +1011,161 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         foregroundColor: Colors.black,
         elevation: 1,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.star),
-            tooltip: "查看收藏",
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text("已收藏的店家"),
-                  content: favorites.isEmpty
-                      ? const Text("目前沒有收藏的店家 ⭐")
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: favorites.map((name) => Text("⭐ $name")).toList(),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.deepPurple.shade400,
+                  Colors.deepPurple.shade600,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.deepPurple.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: enterNextRound,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.fast_forward,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '下一輪',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("關閉"),
-                    )
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: "更多選項",
+            onSelected: (value) async {
+              switch (value) {
+                case 'dev_mode':
+                  _toggleDevelopmentMode();
+                  break;
+                case 'refresh':
+                  setState(() {
+                    round = 1;
+                    liked.clear();
+                    cardSwiperKey++;
+                    selectedIndex = 0;
+                    if (fullRestaurantList.isNotEmpty) {
+                      currentRoundList = List.from(fullRestaurantList)..shuffle();
+                    }
+                  });
+                  _updateRound1Title();
+                  _updateRound2Title();
+                  break;
+                case 'clear_cache':
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('restaurant_cache');
+                  await prefs.remove('cache_lat');
+                  await prefs.remove('cache_lng');
+                  await prefs.remove('cache_radius');
+                  await prefs.remove('cache_timestamp');
+                  await prefs.remove(_placeDetailsCacheKey);
+                  await prefs.remove(_photoUrlCacheKey);
+                  _placeDetailsCache.clear();
+                  _photoUrlCache.clear();
+                  print("🧹 All caches cleared!");
+                  fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
+                  break;
+                case 'api_usage':
+                  setState(() => showApiUsage = !showApiUsage);
+                  break;
+                case 'reset_api':
+                  _resetApiCounters();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('API 計數器已重置'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'dev_mode',
+                child: Row(
+                  children: [
+                    Icon(_disablePhotosForTesting ? Icons.developer_mode : Icons.photo_library),
+                    const SizedBox(width: 8),
+                    const Text('切換開發模式'),
                   ],
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(_disablePhotosForTesting ? Icons.image_not_supported : Icons.image),
-            tooltip: _disablePhotosForTesting ? "開啟照片載入" : "關閉照片載入",
-            onPressed: () {
-              setState(() {
-                _disablePhotosForTesting = !_disablePhotosForTesting;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_disablePhotosForTesting 
-                    ? "已關閉照片載入 (節省 API 用量)" 
-                    : "已開啟照片載入"),
-                  duration: const Duration(seconds: 2),
+              ),
+              if (_disablePhotosForTesting) ...[
+                const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.refresh),
+                      const SizedBox(width: 8),
+                      const Text('重新整理'),
+                    ],
+                  ),
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: "重新整理餐廳資料",
-            onPressed: () {
-              // 重置輪次狀態
-              setState(() {
-                round = 1;
-                liked.clear();
-                cardSwiperKey++;
-                selectedIndex = 0;
-                // 重新打亂餐廳列表順序
-                if (fullRestaurantList.isNotEmpty) {
-                  currentRoundList = List.from(fullRestaurantList)..shuffle();
-                }
-              });
-              // 更新隨機標題
-              _updateRound1Title();
-              _updateRound2Title();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.fast_forward),
-            tooltip: "進入下一輪",
-            onPressed: enterNextRound,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: "清除快取並重整",
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('restaurant_cache');
-              await prefs.remove('cache_lat');
-              await prefs.remove('cache_lng');
-              await prefs.remove('cache_radius');
-              await prefs.remove('cache_timestamp');
-              await prefs.remove(_placeDetailsCacheKey);
-              await prefs.remove(_photoUrlCacheKey);
-              // 清除記憶體中的快取
-              _placeDetailsCache.clear();
-              _photoUrlCache.clear();
-              print("🧹 All caches cleared!");
-              fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.analytics, color: Colors.white),
-            tooltip: "API 使用量摘要",
-            onPressed: () => setState(() => showApiUsage = !showApiUsage),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.orange),
-            tooltip: "重置 API 計數器",
-            onPressed: () {
-              _resetApiCounters();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('API 計數器已重置'),
-                  duration: Duration(seconds: 2),
+                PopupMenuItem<String>(
+                  value: 'clear_cache',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delete_sweep_outlined),
+                      const SizedBox(width: 8),
+                      const Text('清除快取'),
+                    ],
+                  ),
                 ),
-              );
-            },
+                const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: 'api_usage',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.analytics),
+                      const SizedBox(width: 8),
+                      const Text('API 使用量'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'reset_api',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.refresh, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      const Text('重置 API 計數器'),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
@@ -1958,11 +2098,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   Future<void> _savePlaceDetailsToCache(String placeId, Map<String, dynamic> details) async {
     _placeDetailsCache[placeId] = json.encode(details);
-    if (_placeDetailsCache.length > _maxCacheSize) {
-      // 快取超過上限，移除最舊的資料 (此處簡化為移除第一個)
-      _placeDetailsCache.remove(_placeDetailsCache.keys.first);
-      print('ℹ️ Place details cache limit reached, removed oldest entry.');
-    }
+    _updateRestaurantAccessCount(placeId); // 更新訪問次數
+    
+    // 智慧快取清理
+    _smartCacheCleanup();
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_placeDetailsCacheKey, json.encode(_placeDetailsCache));
     print('ℹ️ Saved details for $placeId to cache. Cache size: ${_placeDetailsCache.length}');
@@ -2007,6 +2147,82 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     await prefs.setInt('last_minute_reset_$today', _lastMinuteReset.millisecondsSinceEpoch);
     
     print("🔄 API counters reset successfully");
+  }
+
+  // 新增：一鍵切換開發/正常模式
+  void _toggleDevelopmentMode() {
+    setState(() {
+      _disablePhotosForTesting = !_disablePhotosForTesting;
+    });
+    
+    // 顯示切換結果
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              _disablePhotosForTesting ? Icons.developer_mode : Icons.photo,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Text(_disablePhotosForTesting 
+              ? "已切換到開發模式 (關閉照片載入)" 
+              : "已切換到正常模式 (開啟照片載入)"),
+          ],
+        ),
+        backgroundColor: _disablePhotosForTesting ? Colors.orange : Colors.green,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: '清除快取',
+          textColor: Colors.white,
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('restaurant_cache');
+            await prefs.remove('cache_lat');
+            await prefs.remove('cache_lng');
+            await prefs.remove('cache_radius');
+            await prefs.remove('cache_timestamp');
+            await prefs.remove(_placeDetailsCacheKey);
+            await prefs.remove(_photoUrlCacheKey);
+            _placeDetailsCache.clear();
+            _photoUrlCache.clear();
+            print("🧹 All caches cleared after mode switch!");
+            fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
+          },
+        ),
+      ),
+    );
+  }
+
+  // 新增：預載入機制
+  Future<void> _preloadPopularRestaurants() async {
+    if (!_disablePhotosForTesting) return; // 只在開發模式執行
+    
+    // 預載入一些常見的餐廳類型
+    final popularKeywords = ['麥當勞', '肯德基', '星巴克', '7-11', '全家'];
+    
+    for (final keyword in popularKeywords) {
+      try {
+        final url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?'
+            'query=$keyword&location=$currentLat,$currentLng&radius=5000&key=$apiKey&language=zh-TW';
+        
+        final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final results = data['results'] as List?;
+          
+          if (results != null && results.isNotEmpty) {
+            final placeId = results.first['place_id'] as String?;
+            if (placeId != null && !_placeDetailsCache.containsKey(placeId)) {
+              print('🔄 Preloading popular restaurant: $keyword');
+              await _fetchPlaceDetails(placeId, currentLat ?? 0, currentLng ?? 0);
+            }
+          }
+        }
+      } catch (e) {
+        print('⚠️ Preload failed for $keyword: $e');
+      }
+    }
   }
 }
 
