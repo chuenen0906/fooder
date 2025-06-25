@@ -75,7 +75,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   final String _photoUrlCacheKey = 'photo_url_cache';
   
   // 新增：API 請求限制
-  final int _maxApiCallsPerMinute = 30; // 每分鐘最多 30 次 API 呼叫
+  final int _maxApiCallsPerMinute = 50; // 每分鐘最多 50 次 API 呼叫 (從30增加到50)
   final int _maxApiCallsPerDay = 1000; // 每天最多 1000 次 API 呼叫
   int _apiCallsThisMinute = 0;
   int _apiCallsToday = 0;
@@ -530,8 +530,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     double centerLat = position.latitude;
     double centerLng = position.longitude;
 
-    // 只取前10個 placeId
-    List<String> placeIds = (await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen)).take(10).toList();
+    // 搜尋到目標數量的 placeId
+    List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
 
     List<Future<Map<String, String>?>> detailFutures = [];
     for (final placeId in placeIds) {
@@ -552,6 +552,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Future<List<String>> _getPlaceIdsFromNearbySearch(double lat, double lng, double radius, bool onlyShowOpen) async {
     List<String> placeIds = [];
     String? nextPageToken;
+    final int targetCount = 10; // 目標數量：只需要10個
 
     do {
       // 檢查 API 限制
@@ -590,9 +591,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             final placeId = item['place_id'] as String?;
             if (placeId != null && !placeIds.contains(placeId)) {
               placeIds.add(placeId);
+              // 一旦達到目標數量就停止
+              if (placeIds.length >= targetCount) {
+                print("✅ Found target count of $targetCount restaurants, stopping search");
+                break;
+              }
             }
           }
           nextPageToken = data['next_page_token'] as String?;
+          
+          // 如果已經達到目標數量，不需要繼續搜尋
+          if (placeIds.length >= targetCount) {
+            nextPageToken = null;
+          }
         } else {
           // 如果 HTTP 狀態碼不是 200，拋出異常
           throw Exception('Failed to load places, status code: ${response.statusCode}');
@@ -601,8 +612,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         // 捕獲異常後，直接重新拋出，讓上層處理
         rethrow;
       }
-    } while (nextPageToken != null && placeIds.length < 30); // Stop if we have enough or no more pages
+    } while (nextPageToken != null && placeIds.length < targetCount); // 修改條件：只搜尋到目標數量
 
+    print("📊 Nearby Search completed: found ${placeIds.length} restaurants");
     return placeIds;
   }
 
@@ -1001,6 +1013,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             icon: const Icon(Icons.analytics, color: Colors.white),
             tooltip: "API 使用量摘要",
             onPressed: () => setState(() => showApiUsage = !showApiUsage),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.orange),
+            tooltip: "重置 API 計數器",
+            onPressed: () {
+              _resetApiCounters();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('API 計數器已重置'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -1966,6 +1991,22 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         ),
       ],
     );
+  }
+
+  // 新增：重置 API 計數器功能
+  Future<void> _resetApiCounters() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    
+    _apiCallsThisMinute = 0;
+    _apiCallsToday = 0;
+    _lastMinuteReset = DateTime.now();
+    
+    await prefs.setInt('api_calls_$today', 0);
+    await prefs.setInt('api_calls_minute_$today', 0);
+    await prefs.setInt('last_minute_reset_$today', _lastMinuteReset.millisecondsSinceEpoch);
+    
+    print("🔄 API counters reset successfully");
   }
 }
 
