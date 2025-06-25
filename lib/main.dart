@@ -148,7 +148,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   bool _disablePhotosForTesting = true; // 設為 true 可節省 API 用量
   
   // 新增：可調整的餐廳搜尋數量
-  int _targetRestaurantCount = 15; // 調整為15間餐廳
+  int _targetRestaurantCount = 5; // 開發階段設為5間餐廳以節省成本
+  // TODO: 給朋友使用時改為 15-20 間餐廳
   
   // 新增：快取優化設定
   final int _cacheExpirationHours = 24; // 延長快取時間到24小時
@@ -182,6 +183,45 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       }
       
       print('🧹 Smart cache cleanup: removed ${toRemove.length} unpopular restaurants');
+    }
+  }
+
+  // 新增：批次處理機制
+  final List<String> _batchPlaceDetailsQueue = [];
+  Timer? _batchProcessingTimer;
+  final Duration _batchProcessingDelay = Duration(milliseconds: 500);
+  
+  // 新增：批次處理 Place Details
+  void _addToBatchQueue(String placeId) {
+    if (!_batchPlaceDetailsQueue.contains(placeId)) {
+      _batchPlaceDetailsQueue.add(placeId);
+    }
+    
+    // 重置計時器
+    _batchProcessingTimer?.cancel();
+    _batchProcessingTimer = Timer(_batchProcessingDelay, () {
+      _processBatchQueue();
+    });
+  }
+  
+  Future<void> _processBatchQueue() async {
+    if (_batchPlaceDetailsQueue.isEmpty) return;
+    
+    final placeIds = List<String>.from(_batchPlaceDetailsQueue);
+    _batchPlaceDetailsQueue.clear();
+    
+    print("🔄 Processing batch of ${placeIds.length} place details requests");
+    
+    // 批次處理，但每個請求之間有短暫延遲以避免超出限制
+    for (int i = 0; i < placeIds.length; i++) {
+      final placeId = placeIds[i];
+      if (!_placeDetailsCache.containsKey(placeId)) {
+        await _fetchPlaceDetails(placeId, currentLat ?? 0, currentLng ?? 0);
+        // 每個請求之間等待 100ms
+        if (i < placeIds.length - 1) {
+          await Future.delayed(Duration(milliseconds: 100));
+        }
+      }
     }
   }
 
@@ -502,7 +542,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 _loadingText = '';
               }
             });
+            // 更新隨機標題
             _updateRound1Title();
+            
+            // 新增：預載入熱門餐廳詳細資料
+            _preloadPopularRestaurants();
+            
+            // 新增：檢查 API 使用量並發出警告
+            _checkApiUsageAndWarn();
           }
           
           // 更新快取中的搜尋半徑
@@ -579,6 +626,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         });
         // 更新隨機標題
         _updateRound1Title();
+        
+        // 新增：預載入熱門餐廳詳細資料
+        _preloadPopularRestaurants();
+        
+        // 新增：檢查 API 使用量並發出警告
+        _checkApiUsageAndWarn();
       }
       
       // 如果是新的搜尋結果，更新快取
@@ -743,7 +796,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       await _incrementApiCall();
       print("📍 Place Details called: $placeDetailsCount times");
       
-      const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity,user_ratings_total';
+      const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity';
       final String detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=$fields&key=$apiKey&language=zh-TW';
 
       final response = await http.get(Uri.parse(detailsUrl)).timeout(const Duration(seconds: 8));
@@ -762,10 +815,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         if (photoReferences.isNotEmpty && !_disablePhotosForTesting) {
           final ref = photoReferences.first;
           photoRequestCount++;
-          print("🖼️ Place Photo requested: $photoRequestCount times");
+          print("🖼️ Place Photo requested: $photoRequestCount times for $placeId");
+          print("🖼️ Photo mode: ${_disablePhotosForTesting ? 'DISABLED' : 'ENABLED'}");
           photoUrls = ['https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'];
         } else if (_disablePhotosForTesting) {
           print("🖼️ Photo request skipped (development mode) for $placeId");
+        } else if (photoReferences.isEmpty) {
+          print("🖼️ No photo references available for $placeId");
         }
 
         final photoUrl = photoUrls.isNotEmpty
@@ -806,6 +862,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
     if (direction == CardSwiperDirection.right) {
       liked.add(json.encode(swipedRestaurant));
+      
+      // 新增：根據使用者行為進行智慧預載入
+      _smartPreloadBasedOnUserBehavior();
     }
 
     handleSwipeUpdate(direction, 1.0);
@@ -1340,6 +1399,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     const Divider(color: Colors.white54, height: 20),
                     _buildApiUsageRow('本分鐘', _apiCallsThisMinute, Colors.red),
                     _buildApiUsageRow('今日總計', _apiCallsToday, Colors.purple),
+                    const Divider(color: Colors.white54, height: 20),
+                    _buildApiUsageRow('預估成本', _calculateEstimatedCost().toStringAsFixed(3), Colors.yellow, isCost: true),
                     const SizedBox(height: 12),
                     Text(
                       '限制：每分鐘 $_maxApiCallsPerMinute 次，每日 $_maxApiCallsPerDay 次',
@@ -2109,7 +2170,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
   // --- END ---
 
-  Widget _buildApiUsageRow(String title, int count, Color color) {
+  Widget _buildApiUsageRow(String title, dynamic count, Color color, {bool isCost = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -2129,6 +2190,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             fontWeight: FontWeight.bold,
           ),
         ),
+        if (isCost)
+          Text(
+            '\$$count',
+            style: TextStyle(
+              color: Colors.yellow,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
       ],
     );
   }
@@ -2194,35 +2264,116 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     );
   }
 
-  // 新增：預載入機制
+  // 新增：預載入策略
   Future<void> _preloadPopularRestaurants() async {
-    if (!_disablePhotosForTesting) return; // 只在開發模式執行
+    if (fullRestaurantList.isEmpty) return;
     
-    // 預載入一些常見的餐廳類型
-    final popularKeywords = ['麥當勞', '肯德基', '星巴克', '7-11', '全家'];
+    // 預載入前 5 家餐廳的詳細資料
+    final restaurantsToPreload = fullRestaurantList.take(5).toList();
     
-    for (final keyword in popularKeywords) {
-      try {
-        final url = 'https://maps.googleapis.com/maps/api/place/textsearch/json?'
-            'query=$keyword&location=$currentLat,$currentLng&radius=5000&key=$apiKey&language=zh-TW';
-        
-        final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 5));
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final results = data['results'] as List?;
-          
-          if (results != null && results.isNotEmpty) {
-            final placeId = results.first['place_id'] as String?;
-            if (placeId != null && !_placeDetailsCache.containsKey(placeId)) {
-              print('🔄 Preloading popular restaurant: $keyword');
-              await _fetchPlaceDetails(placeId, currentLat ?? 0, currentLng ?? 0);
-            }
-          }
-        }
-      } catch (e) {
-        print('⚠️ Preload failed for $keyword: $e');
+    for (final restaurant in restaurantsToPreload) {
+      final placeId = restaurant['place_id'];
+      if (placeId != null && !_placeDetailsCache.containsKey(placeId)) {
+        _addToBatchQueue(placeId);
       }
     }
+    
+    print("🚀 Preloading details for ${restaurantsToPreload.length} popular restaurants");
+  }
+  
+  // 新增：智慧預載入 - 根據使用者行為預測
+  void _smartPreloadBasedOnUserBehavior() {
+    if (liked.isEmpty) return;
+    
+    // 如果使用者右滑了某些餐廳，預載入相似類型的餐廳
+    final likedRestaurants = liked.map((e) => Map<String, String>.from(json.decode(e))).toList();
+    final likedTypes = <String>{};
+    
+    for (final restaurant in likedRestaurants) {
+      final types = restaurant['types'];
+      if (types != null) {
+        try {
+          final List<dynamic> typeList = json.decode(types);
+          likedTypes.addAll(typeList.cast<String>());
+        } catch (e) {
+          // 忽略解析錯誤
+        }
+      }
+    }
+    
+    // 預載入相似類型的餐廳
+    for (final restaurant in fullRestaurantList) {
+      if (likedTypes.isNotEmpty) {
+        final types = restaurant['types'];
+        if (types != null) {
+          try {
+            final List<dynamic> typeList = json.decode(types);
+            final hasCommonType = typeList.any((type) => likedTypes.contains(type));
+            if (hasCommonType) {
+              final placeId = restaurant['place_id'];
+              if (placeId != null && !_placeDetailsCache.containsKey(placeId)) {
+                _addToBatchQueue(placeId);
+              }
+            }
+          } catch (e) {
+            // 忽略解析錯誤
+          }
+        }
+      }
+    }
+  }
+
+  // 新增：API 成本監控和警告
+  void _checkApiUsageAndWarn() {
+    final currentMinute = DateTime.now().minute;
+    if (currentMinute != _lastMinuteReset.minute) {
+      _apiCallsThisMinute = 0;
+      _lastMinuteReset = DateTime.now();
+    }
+    
+    // 當 API 使用量接近限制時發出警告
+    if (_apiCallsThisMinute >= _maxApiCallsPerMinute * 0.8) {
+      print("⚠️ WARNING: API calls this minute: $_apiCallsThisMinute/$_maxApiCallsPerMinute");
+      _showApiUsageWarning();
+    }
+    
+    if (_apiCallsToday >= _maxApiCallsPerDay * 0.8) {
+      print("⚠️ WARNING: API calls today: $_apiCallsToday/$_maxApiCallsPerDay");
+      _showApiUsageWarning();
+    }
+  }
+  
+  void _showApiUsageWarning() {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '⚠️ API 使用量接近限制\n本分鐘: $_apiCallsThisMinute/$_maxApiCallsPerMinute | 今日: $_apiCallsToday/$_maxApiCallsPerDay',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.orange,
+        duration: Duration(seconds: 3),
+        action: SnackBarAction(
+          label: '關閉',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+  
+  // 新增：API 成本估算
+  double _calculateEstimatedCost() {
+    // Google Places API 價格（2024年）：
+    // Nearby Search: $0.017 per request
+    // Place Details: $0.017 per request  
+    // Place Photos: $0.007 per request
+    final nearbySearchCost = nearbySearchCount * 0.017;
+    final placeDetailsCost = placeDetailsCount * 0.017;
+    final photoCost = photoRequestCount * 0.007;
+    
+    return nearbySearchCost + placeDetailsCost + photoCost;
   }
 }
 
