@@ -144,6 +144,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   // 新增：API 使用量顯示
   bool showApiUsage = false;
 
+  // 新增：開發模式開關 - 關閉照片載入以節省 API 用量
+  bool _disablePhotosForTesting = true; // 設為 true 可節省 API 用量
+
   @override
   void initState() {
     super.initState();
@@ -374,7 +377,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               double.tryParse(r['lat'] ?? '0') ?? 0,
               double.tryParse(r['lng'] ?? '0') ?? 0,
             );
-            r['distance'] = (reCalculatedDistance / 1000).toStringAsFixed(2);
+            r['distance'] = reCalculatedDistance.toStringAsFixed(0);
           }
           if(mounted) {
             setState(() {
@@ -453,7 +456,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           double.parse(r['lat'] ?? '0'), 
           double.parse(r['lng'] ?? '0')
         );
-        r['distance'] = (reCalculatedDistance / 1000).toStringAsFixed(2);
+        r['distance'] = reCalculatedDistance.toStringAsFixed(0);
+        
+        // 新增除錯資訊
+        if (finalList.length <= 3) { // 只顯示前3家的除錯資訊
+          print("📍 ${r['name']}: ${reCalculatedDistance.toStringAsFixed(0)}m (${(reCalculatedDistance/1000).toStringAsFixed(2)}km)");
+        }
+        
         return reCalculatedDistance <= searchRadiusMeters;
       }).toList();
 
@@ -648,13 +657,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
             : <String>[];
 
-        // 只取第一張照片
+        // 新增：開發模式下跳過照片請求以節省 API 用量
         List<String> photoUrls = [];
-        if (photoReferences.isNotEmpty) {
+        if (photoReferences.isNotEmpty && !_disablePhotosForTesting) {
           final ref = photoReferences.first;
           photoRequestCount++;
           print("🖼️ Place Photo requested: $photoRequestCount times");
           photoUrls = ['https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'];
+        } else if (_disablePhotosForTesting) {
+          print("🖼️ Photo request skipped (development mode) for $placeId");
         }
 
         final photoUrl = photoUrls.isNotEmpty
@@ -666,7 +677,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           'image': photoUrl,
           'lat': item['geometry']?['location']?['lat']?.toString() ?? '',
           'lng': item['geometry']?['location']?['lng']?.toString() ?? '',
-          'distance': calculateDistance(centerLat, centerLng, item['geometry']['location']['lat'], item['geometry']['location']['lng']).toStringAsFixed(2),
+          'distance': calculateDistance(centerLat, centerLng, item['geometry']['location']['lat'], item['geometry']['location']['lng']).toStringAsFixed(0),
           'types': json.encode(item['types'] ?? []),
           'rating': item['rating']?.toString() ?? 'N/A',
           'open_now': (item['opening_hours']?['open_now']?.toString()) ?? 'unknown',
@@ -926,6 +937,23 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             },
           ),
           IconButton(
+            icon: Icon(_disablePhotosForTesting ? Icons.image_not_supported : Icons.image),
+            tooltip: _disablePhotosForTesting ? "開啟照片載入" : "關閉照片載入",
+            onPressed: () {
+              setState(() {
+                _disablePhotosForTesting = !_disablePhotosForTesting;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_disablePhotosForTesting 
+                    ? "已關閉照片載入 (節省 API 用量)" 
+                    : "已開啟照片載入"),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: "重新整理餐廳資料",
             onPressed: () {
@@ -961,6 +989,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               await prefs.remove('cache_radius');
               await prefs.remove('cache_timestamp');
               await prefs.remove(_placeDetailsCacheKey);
+              await prefs.remove(_photoUrlCacheKey);
+              // 清除記憶體中的快取
+              _placeDetailsCache.clear();
+              _photoUrlCache.clear();
               print("🧹 All caches cleared!");
               fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
             },
