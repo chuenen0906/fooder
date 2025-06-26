@@ -11,7 +11,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'services/restaurant_json_service.dart';
 
 void main() async {
   await dotenv.load();
@@ -43,8 +42,8 @@ class NearbyFoodSwipePage extends StatefulWidget {
 
 class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
   final String apiKey = dotenv.env['GOOGLE_API_KEY'] ?? ''; // 已更新 API key
-  List<Map<String, dynamic>> fullRestaurantList = [];
-  List<Map<String, dynamic>> currentRoundList = [];
+  List<Map<String, String>> fullRestaurantList = [];
+  List<Map<String, String>> currentRoundList = [];
   final List<String> liked = [];
   final Set<String> favorites = {};
   int round = 1;
@@ -76,7 +75,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   final String _photoUrlCacheKey = 'photo_url_cache';
   
   // 新增：API 請求限制
-  final int _maxApiCallsPerMinute = 100; // 每分鐘最多 100 次 API 呼叫 (從30增加到50)
+  final int _maxApiCallsPerMinute = 50; // 每分鐘最多 50 次 API 呼叫 (從30增加到50)
   final int _maxApiCallsPerDay = 1000; // 每天最多 1000 次 API 呼叫
   int _apiCallsThisMinute = 0;
   int _apiCallsToday = 0;
@@ -120,17 +119,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   // 新增：骰子按鈕相關變數
   bool _isRollingDice = false;
-  Map<String, dynamic>? _selectedRestaurant;
+  Map<String, String>? _selectedRestaurant;
 
   // 快取關鍵字搜尋結果
   Map<String, List<String>> _keywordCache = {};
   String _lastKeywordCacheKey = '';
   
   // 照片快取
-  Map<String, dynamic> _photoCache = {};
+  Map<String, String> _photoCache = {};
   
   // Place Details 獨立快取
-  Map<String, dynamic> _placeDetailsCache = {};
+  Map<String, String> _placeDetailsCache = {};
   final String _placeDetailsCacheKey = 'place_details_cache';
   // 移除重複宣告，使用智慧快取策略中的 _maxCacheSize
   
@@ -149,7 +148,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   bool _disablePhotosForTesting = true; // 設為 true 可節省 API 用量
   
   // 新增：可調整的餐廳搜尋數量
-  int _targetRestaurantCount = 20; // 使用者模式：每次搜尋 20 家
+  int _targetRestaurantCount = 5; // 開發階段設為5間餐廳以節省成本
   // TODO: 給朋友使用時改為 15-20 間餐廳
   
   // 新增：快取優化設定
@@ -226,40 +225,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  bool useJson = false; // 新增：資料來源切換
-
-  // 3. 新增每日 API 請求上限
-  final int _maxApiRequestsPerDay = 150;
-  int _apiRequestsToday = 0;
-
-  Future<void> _loadApiRequestsToday() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _apiRequestsToday = prefs.getInt('api_requests_today_$today') ?? 0;
-  }
-
-  Future<void> _incrementApiRequestsToday() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    _apiRequestsToday++;
-    await prefs.setInt('api_requests_today_$today', _apiRequestsToday);
-  }
-
-  bool _canSearchToday() {
-    return _apiRequestsToday < _maxApiRequestsPerDay;
-  }
-
   @override
   void initState() {
     super.initState();
-    _loadApiRequestsToday();
-    _loadApiUsageStats();
-    if (useJson) {
-      loadJsonData();
-    } else {
-      fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
-    }
     loadFavorites();
+    _loadApiUsageStats(); // 載入 API 使用統計
+    fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
     
     // 初始化隨機標題
     _updateRound1Title();
@@ -319,28 +290,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Future<void> _loadApiUsageStats() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    nearbySearchCount = prefs.getInt('nearbySearchCount_$today') ?? 0;
-    placeDetailsCount = prefs.getInt('placeDetailsCount_$today') ?? 0;
-    photoRequestCount = prefs.getInt('photoRequestCount_$today') ?? 0;
-  }
-
-  Future<void> _incrementNearbySearchCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    nearbySearchCount++;
-    await prefs.setInt('nearbySearchCount_$today', nearbySearchCount);
-  }
-  Future<void> _incrementPlaceDetailsCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    placeDetailsCount++;
-    await prefs.setInt('placeDetailsCount_$today', placeDetailsCount);
-  }
-  Future<void> _incrementPhotoRequestCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    photoRequestCount++;
-    await prefs.setInt('photoRequestCount_$today', photoRequestCount);
+    
+    _apiCallsToday = prefs.getInt('api_calls_$today') ?? 0;
+    _apiCallsThisMinute = prefs.getInt('api_calls_minute_$today') ?? 0;
+    _lastMinuteReset = DateTime.fromMillisecondsSinceEpoch(
+      prefs.getInt('last_minute_reset_$today') ?? DateTime.now().millisecondsSinceEpoch
+    );
+    
+    // 檢查是否需要重置分鐘計數
+    if (DateTime.now().difference(_lastMinuteReset).inMinutes >= 1) {
+      _apiCallsThisMinute = 0;
+      _lastMinuteReset = DateTime.now();
+      await prefs.setInt('api_calls_minute_$today', 0);
+      await prefs.setInt('last_minute_reset_$today', _lastMinuteReset.millisecondsSinceEpoch);
+    }
   }
 
   Future<void> _incrementApiCall() async {
@@ -441,17 +404,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   Future<void> fetchAllRestaurants({double radiusKm = 5, bool onlyShowOpen = true}) async {
-    if (!_canSearchToday()) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-          isSplash = false;
-          _loadingText = '今日 API 請求已達上限，請明天再試';
-        });
-      }
-      return;
-    }
-    await _incrementApiRequestsToday();
     final prefs = await SharedPreferences.getInstance();
     
     try {
@@ -494,7 +446,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         if (distance < _locationCacheDistance && (radiusKm - cachedRadius).abs() < 0.1) {
           print("📦 Using nearby cache (distance: ${distance.toStringAsFixed(0)}m, radius: $radiusKm km)");
           final List<dynamic> decodedData = jsonDecode(cachedDataString);
-          final cachedRestaurants = decodedData.map((item) => Map<String, dynamic>.from(item)).toList();
+          final cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
           // 新增：強制重新計算每家餐廳的距離
           for (var r in cachedRestaurants) {
             double reCalculatedDistance = calculateDistance(
@@ -518,7 +470,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         }
       }
       
-      List<Map<String, dynamic>> cachedRestaurants = [];
+      List<Map<String, String>> cachedRestaurants = [];
       final cachedTimestamp = prefs.getInt('cache_timestamp');
       if (cachedDataString != null && cachedTimestamp != null) {
           final now = DateTime.now().millisecondsSinceEpoch;
@@ -528,7 +480,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               (cachedRadius == null || (radiusKm - cachedRadius).abs() < 0.1)) {
             print("📦 Using time cache (${((now - cachedTimestamp) / (60 * 60 * 1000)).toStringAsFixed(1)} hours old)");
             final List<dynamic> decodedData = jsonDecode(cachedDataString);
-            cachedRestaurants = decodedData.map((item) => Map<String, dynamic>.from(item)).toList();
+            cachedRestaurants = decodedData.map((item) => Map<String, String>.from(item)).toList();
             if (mounted && cachedRestaurants.isNotEmpty) {
               setState(() {
                 _loadingText = '顯示快取資料...';
@@ -626,7 +578,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       final cachedIds = cachedRestaurants.map((r) => r['place_id']).toSet();
 
       // 【修正】無論資料來源，都使用完整的列表進行最終處理
-      List<Map<String, dynamic>> finalList = List.from(newRestaurants);
+      List<Map<String, String>> finalList = List.from(newRestaurants);
 
       // --- 嚴格的距離過濾 ---
       final double searchRadiusMeters = radiusKm * 1000;
@@ -702,7 +654,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  Future<List<Map<String, dynamic>>> _fetchFromApi({
+  Future<List<Map<String, String>>> _fetchFromApi({
     required Position position,
     double radiusKm = 5,
     bool onlyShowOpen = true
@@ -721,20 +673,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     // 搜尋到目標數量的 placeId
     List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
 
-    List<Future<Map<String, dynamic>?>> detailFutures = [];
+    List<Future<Map<String, String>?>> detailFutures = [];
     for (final placeId in placeIds) {
       if (_placeDetailsCache.containsKey(placeId)) {
         final cachedJson = _placeDetailsCache[placeId]!;
         final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
-        detailFutures.add(Future.value(decodedDetails));
+        detailFutures.add(Future.value(decodedDetails.map((key, value) => MapEntry(key, value.toString()))));
       } else {
         detailFutures.add(_fetchPlaceDetails(placeId, centerLat, centerLng));
       }
     }
 
-    final List<Map<String, dynamic>?> detailedRestaurants = await Future.wait(detailFutures);
+    final List<Map<String, String>?> detailedRestaurants = await Future.wait(detailFutures);
 
-    return detailedRestaurants.where((r) => r != null).cast<Map<String, dynamic>>().toList();
+    return detailedRestaurants.where((r) => r != null).cast<Map<String, String>>().toList();
   }
 
   Future<List<String>> _getPlaceIdsFromNearbySearch(double lat, double lng, double radius, bool onlyShowOpen) async {
@@ -751,14 +703,16 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
       String url;
       if (nextPageToken == null) {
-        await _incrementNearbySearchCount();
-        print("📡 發送 Nearby Search，座標: $lat,$lng，半徑: $radius");
+        nearbySearchCount++;
+        await _incrementApiCall();
+        print("📡 Nearby Search called: $nearbySearchCount times");
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
             'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
       } else {
         // As per Google's requirement, wait before making the next page request.
         await Future.delayed(const Duration(seconds: 2));
-        await _incrementNearbySearchCount();
+        nearbySearchCount++;
+        await _incrementApiCall();
         print("📡 Nearby Search called: $nearbySearchCount times");
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
             'pagetoken=$nextPageToken&key=$apiKey';
@@ -804,7 +758,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     return placeIds;
   }
 
-  Future<Map<String, dynamic>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
+  Future<Map<String, String>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
     // 檢查 API 限制
     if (!_canMakeApiCall()) {
       print("🚫 Place Details API call blocked due to rate limiting for $placeId");
@@ -817,7 +771,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       _updateRestaurantAccessCount(placeId); // 更新訪問次數
       final cachedJson = _placeDetailsCache[placeId]!;
       final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
-      return decodedDetails;
+      // 將 Map<String, dynamic> 轉為 Map<String, String>
+      return decodedDetails.map((key, value) => MapEntry(key, value.toString()));
     }
 
     // 2. 檢查是否正在請求中
@@ -837,8 +792,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       _addPendingRequest(placeId);
       _lastApiCallTime[placeId] = DateTime.now();
       
-      await _incrementPlaceDetailsCount();
-      print("📍 發送 Place Details，placeId: $placeId");
+      placeDetailsCount++;
+      await _incrementApiCall();
+      print("📍 Place Details called: $placeDetailsCount times");
       
       const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity';
       final String detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=$fields&key=$apiKey&language=zh-TW';
@@ -858,8 +814,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         List<String> photoUrls = [];
         if (photoReferences.isNotEmpty && !_disablePhotosForTesting) {
           final ref = photoReferences.first;
-          await _incrementPhotoRequestCount();
-          print("🖼️ 發送 Place Photo，placeId: $placeId");
+          photoRequestCount++;
+          print("🖼️ Place Photo requested: $photoRequestCount times for $placeId");
           print("🖼️ Photo mode: ${_disablePhotosForTesting ? 'DISABLED' : 'ENABLED'}");
           photoUrls = ['https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'];
         } else if (_disablePhotosForTesting) {
@@ -890,7 +846,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         _savePlaceDetailsToCache(placeId, detailsMapDynamic);
 
         // 4. 回傳 Map<String, String>
-        return detailsMapDynamic;
+        return detailsMapDynamic.map((key, value) => MapEntry(key, value.toString()));
       }
       return null;
     } catch (e) {
@@ -1018,7 +974,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  String classifyRestaurant(List types, Map<String, dynamic> restaurant) {
+  String classifyRestaurant(List types, Map<String, String> restaurant) {
     final breakfastKeywords = [
       '美而美', '弘爺', '拉亞', '麥味登', '早安美芝城', 'Q Burger', '晨間廚房', '元氣', '早安', '晨間', '早餐', '早點',
       '福來早餐', '樂活早餐', '晨間廚坊', '晨間廚房', '晨間食堂', '晨間食坊', '晨間小棧', '晨間小館', '晨間坊',
@@ -1211,18 +1167,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ),
                   );
                   break;
-                case 'toggle_json':
-                  setState(() {
-                    useJson = !useJson;
-                    isLoading = true;
-                    _loadingText = useJson ? '載入本地 JSON 資料...' : '載入 Google API 資料...';
-                  });
-                  if (useJson) {
-                    loadJsonData();
-                  } else {
-                    fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
-                  }
-                  break;
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -1280,16 +1224,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   ),
                 ),
               ],
-              PopupMenuItem(
-                value: 'toggle_json',
-                child: Row(
-                  children: [
-                    Icon(useJson ? Icons.api : Icons.storage, color: useJson ? Colors.purple : Colors.grey),
-                    const SizedBox(width: 8),
-                    Text(useJson ? '切換到 Google API' : '切換到 JSON'),
-                  ],
-                ),
-              ),
             ],
           ),
         ],
@@ -1475,7 +1409,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                         fontSize: 12,
                       ),
                     ),
-                    Text('今日全部 API 請求總次數：${nearbySearchCount + placeDetailsCount + photoRequestCount}'),
                   ],
                 ),
               ),
@@ -1485,7 +1418,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     );
   }
 
-  String getOpenStatus(Map<String, dynamic> restaurant) {
+  String getOpenStatus(Map<String, String> restaurant) {
     if (restaurant['open_now'] == 'true') {
       return '🟢';
     } else if (restaurant['open_now'] == 'false') {
@@ -1574,10 +1507,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  void _showDiceResultDialog(Map<String, dynamic> restaurant) {
+  void _showDiceResultDialog(Map<String, String> restaurant) {
     double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
-    final rating = restaurant['rating'];
-    final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
+    final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
     
     // 多圖輪播
     List<String> photoUrls = [];
@@ -1751,8 +1683,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 } catch (_) {}
               }
               final String typeText = classifyRestaurant(typesList, restaurant);
-              final rating = restaurant['rating'];
-              final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
+              final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
               final String openStatus = getOpenStatus(restaurant);
               
               // 多圖輪播
@@ -2005,8 +1936,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 } catch (_) {}
               }
               final String typeText = classifyRestaurant(typesList, restaurant);
-              final rating = restaurant['rating'];
-              final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
+              final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
               final String openStatus = getOpenStatus(restaurant);
               
               // 多圖輪播
@@ -2222,7 +2152,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     final cachedJson = prefs.getString(_placeDetailsCacheKey);
     if (cachedJson != null) {
       setState(() {
-        _placeDetailsCache = Map<String, dynamic>.from(json.decode(cachedJson));
+        _placeDetailsCache = Map<String, String>.from(json.decode(cachedJson));
       });
     }
   }
@@ -2343,7 +2273,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     
     for (final restaurant in restaurantsToPreload) {
       final placeId = restaurant['place_id'];
-      if (placeId != null && !_fetchedPlaceIds.contains(placeId) && !_placeDetailsCache.containsKey(placeId)) {
+      if (placeId != null && !_placeDetailsCache.containsKey(placeId)) {
         _addToBatchQueue(placeId);
       }
     }
@@ -2381,7 +2311,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             final hasCommonType = typeList.any((type) => likedTypes.contains(type));
             if (hasCommonType) {
               final placeId = restaurant['place_id'];
-              if (placeId != null && !_fetchedPlaceIds.contains(placeId) && !_placeDetailsCache.containsKey(placeId)) {
+              if (placeId != null && !_placeDetailsCache.containsKey(placeId)) {
                 _addToBatchQueue(placeId);
               }
             }
@@ -2445,36 +2375,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     
     return nearbySearchCost + placeDetailsCost + photoCost;
   }
-
-  Future<void> loadJsonData() async {
-    if (!_canSearchToday()) {
-      setState(() {
-        isLoading = false;
-        isSplash = false;
-        _loadingText = '今日 API 請求已達上限，請明天再試';
-      });
-      return;
-    }
-    await _incrementApiRequestsToday();
-    final data = await RestaurantJsonService.loadRestaurants();
-    setState(() {
-      fullRestaurantList = List<Map<String, dynamic>>.from(data);
-      currentRoundList = List.from(fullRestaurantList)..shuffle();
-      isLoading = false;
-      isSplash = false;
-      _loadingText = '已載入本地 JSON 資料';
-    });
-  }
-
-  Set<String> _fetchedPlaceIds = {};
 }
 
 class RestaurantDetailPage extends StatelessWidget {
-  final Map<String, dynamic> restaurant;
+  final Map<String, String> restaurant;
   final Set<String> favorites;
   final Function(String) onToggleFavorite;
-  final Function(List, Map<String, dynamic>) classifyRestaurant;
-  final Function(Map<String, dynamic>) getOpenStatus;
+  final Function(List, Map<String, String>) classifyRestaurant;
+  final Function(Map<String, String>) getOpenStatus;
   
   const RestaurantDetailPage({
     super.key, 
@@ -2499,8 +2407,7 @@ class RestaurantDetailPage extends StatelessWidget {
       } catch (_) {}
     }
     final String typeText = classifyRestaurant(typesList, restaurant);
-    final rating = restaurant['rating'];
-    final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
+    final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
     final String openStatus = getOpenStatus(restaurant);
     
     // 多圖輪播

@@ -1,0 +1,84 @@
+{
+  "restaurants": [
+    {
+      "id": "1",
+      "name": "度小月擔仔麵",
+      "address": "台南市中西區中正路16號",
+      "rating": 4.2,
+      "price_level": 2,
+      "types": ["中式", "麵食"],
+      "photo_urls": [
+        "https://via.placeholder.com/400x300.png?text=度小月擔仔麵"
+      ],
+      "lat": 22.9971,
+      "lng": 120.1968,
+      "open_now": true,
+      "phone": "06-225-9554",
+      "website": "https://www.douhsiao.com.tw"
+    },
+    {
+      "id": "2",
+      "name": "阿堂鹹粥",
+      "address": "台南市中西區西門路一段728號",
+      "rating": 4.5,
+      "price_level": 1,
+      "types": ["中式", "粥品"],
+      "photo_urls": [
+        "https://via.placeholder.com/400x300.png?text=阿堂鹹粥"
+      ],
+      "lat": 22.9956,
+      "lng": 120.1962,
+      "open_now": true,
+      "phone": "06-213-2572",
+      "website": ""
+    },
+    {
+      "id": "3",
+      "name": "同記安平豆花",
+      "address": "台南市安平區安北路433號",
+      "rating": 4.3,
+      "price_level": 1,
+      "types": ["甜點", "豆花"],
+      "photo_urls": [
+        "https://via.placeholder.com/400x300.png?text=同記安平豆花"
+      ],
+      "lat": 23.0001,
+      "lng": 120.1612,
+      "open_now": true,
+      "phone": "06-391-5385",
+      "website": ""
+    },
+    {
+      "id": "4",
+      "name": "周氏蝦捲",
+      "address": "台南市安平區安平路408號",
+      "rating": 4.1,
+      "price_level": 2,
+      "types": ["中式", "海鮮"],
+      "photo_urls": [
+        "https://via.placeholder.com/400x300.png?text=周氏蝦捲"
+      ],
+      "lat": 22.9989,
+      "lng": 120.1625,
+      "open_now": true,
+      "phone": "06-229-2618",
+      "website": "https://www.chous.com.tw"
+    },
+    {
+      "id": "5",
+      "name": "赤崁擔仔麵",
+      "address": "台南市中西區民族路二段216號",
+      "rating": 4.4,
+      "price_level": 2,
+      "types": ["中式", "麵食"],
+      "photo_urls": [
+        "https://via.placeholder.com/400x300.png?text=赤崁擔仔麵"
+      ],
+      "lat": 22.9965,
+      "lng": 120.1985,
+      "open_now": true,
+      "phone": "06-225-0036",
+      "website": ""
+    }
+  ]
+} 

@@ -32,7 +32,6 @@ flutter:
   assets:
     - assets/loading_pig.png
     - .env
-    - lib/data/tainan_restaurants.json
 
 flutter_launcher_icons:
   android: true
