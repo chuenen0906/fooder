@@ -1594,7 +1594,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     const SizedBox(width: 4),
                     Text(
                       dist >= 1000
-                          ? '${(dist / 1000).toStringAsFixed(1).replaceAll('.0', '')} km'
+                          ? '${(dist / 1000).toStringAsFixed(1)} km'
                           : '${dist.toStringAsFixed(0)} m',
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
@@ -1673,8 +1673,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               final restaurant = currentRoundList[index];
               double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
               String distanceText = dist >= 1000
-                  ? '距離你約  ${(dist / 1000).toStringAsFixed(1)} 公里'
-                  : '距離你約 ${dist.toStringAsFixed(0)} 公尺';
+                  ? '${(dist / 1000).toStringAsFixed(1)} km'
+                  : '${dist.toStringAsFixed(0)} m';
 
               List typesList = [];
               if (restaurant['types'] != null) {
@@ -1926,8 +1926,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               final restaurant = currentRoundList[index];
               double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
               String distanceText = dist >= 1000
-                  ? '距離你約  ${(dist / 1000).toStringAsFixed(1)} 公里'
-                  : '距離你約 ${dist.toStringAsFixed(0)} 公尺';
+                  ? '${(dist / 1000).toStringAsFixed(1)} km'
+                  : '${dist.toStringAsFixed(0)} m';
 
               List typesList = [];
               if (restaurant['types'] != null) {
@@ -2397,8 +2397,8 @@ class RestaurantDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
     String distanceText = dist >= 1000
-        ? '距離你約  ${(dist / 1000).toStringAsFixed(1)} 公里'
-        : '距離你約 ${dist.toStringAsFixed(0)} 公尺';
+        ? '${(dist / 1000).toStringAsFixed(1)} km'
+        : '${dist.toStringAsFixed(0)} m';
 
     List typesList = [];
     if (restaurant['types'] != null) {
