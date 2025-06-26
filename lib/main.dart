@@ -76,7 +76,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   final String _photoUrlCacheKey = 'photo_url_cache';
   
   // 新增：API 請求限制
-  final int _maxApiCallsPerMinute = 100; // 每分鐘最多 100 次 API 呼叫 (從30增加到50)
+  final int _maxApiCallsPerMinute = 60; // 每分鐘最多 60 次 API 呼叫
   final int _maxApiCallsPerDay = 1000; // 每天最多 1000 次 API 呼叫
   int _apiCallsThisMinute = 0;
   int _apiCallsToday = 0;
@@ -329,18 +329,21 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     nearbySearchCount++;
     await prefs.setInt('nearbySearchCount_$today', nearbySearchCount);
+    _updateLastFetchTotal();
   }
   Future<void> _incrementPlaceDetailsCount() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     placeDetailsCount++;
     await prefs.setInt('placeDetailsCount_$today', placeDetailsCount);
+    _updateLastFetchTotal();
   }
   Future<void> _incrementPhotoRequestCount() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     photoRequestCount++;
     await prefs.setInt('photoRequestCount_$today', photoRequestCount);
+    _updateLastFetchTotal();
   }
 
   Future<void> _incrementApiCall() async {
@@ -1184,6 +1187,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   });
                   _updateRound1Title();
                   _updateRound2Title();
+                  _resetApiFetchCounter();
                   break;
                 case 'clear_cache':
                   final prefs = await SharedPreferences.getInstance();
@@ -1197,6 +1201,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   _placeDetailsCache.clear();
                   _photoUrlCache.clear();
                   print("🧹 All caches cleared!");
+                  _resetApiFetchCounter();
                   fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
                   break;
                 case 'api_usage':
@@ -1463,8 +1468,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     _buildApiUsageRow('Place Details', placeDetailsCount, Colors.green),
                     _buildApiUsageRow('Place Photos', photoRequestCount, Colors.orange),
                     const Divider(color: Colors.white54, height: 20),
-                    _buildApiUsageRow('本分鐘', _apiCallsThisMinute, Colors.red),
-                    _buildApiUsageRow('今日總計', _apiCallsToday, Colors.purple),
+                    _buildApiUsageRow('今日總計', nearbySearchCount + placeDetailsCount + photoRequestCount, Colors.purple),
                     const Divider(color: Colors.white54, height: 20),
                     _buildApiUsageRow('預估成本', _calculateEstimatedCost().toStringAsFixed(3), Colors.yellow, isCost: true),
                     const SizedBox(height: 12),
@@ -2337,28 +2341,23 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   // 新增：預載入策略
   Future<void> _preloadPopularRestaurants() async {
     if (fullRestaurantList.isEmpty) return;
-    
     // 預載入前 5 家餐廳的詳細資料
     final restaurantsToPreload = fullRestaurantList.take(5).toList();
-    
     for (final restaurant in restaurantsToPreload) {
       final placeId = restaurant['place_id'];
+      // 僅對主流程未請求過、且快取沒有的 placeId 預載入
       if (placeId != null && !_fetchedPlaceIds.contains(placeId) && !_placeDetailsCache.containsKey(placeId)) {
         _addToBatchQueue(placeId);
       }
     }
-    
-    print("🚀 Preloading details for ${restaurantsToPreload.length} popular restaurants");
+    print("🚀 Preloading details for "+restaurantsToPreload.length.toString()+" popular restaurants");
   }
-  
   // 新增：智慧預載入 - 根據使用者行為預測
   void _smartPreloadBasedOnUserBehavior() {
     if (liked.isEmpty) return;
-    
     // 如果使用者右滑了某些餐廳，預載入相似類型的餐廳
-    final likedRestaurants = liked.map((e) => Map<String, String>.from(json.decode(e))).toList();
+    final likedRestaurants = liked.map((e) => Map<String, dynamic>.from(json.decode(e))).toList();
     final likedTypes = <String>{};
-    
     for (final restaurant in likedRestaurants) {
       final types = restaurant['types'];
       if (types != null) {
@@ -2370,7 +2369,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         }
       }
     }
-    
     // 預載入相似類型的餐廳
     for (final restaurant in fullRestaurantList) {
       if (likedTypes.isNotEmpty) {
@@ -2381,6 +2379,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             final hasCommonType = typeList.any((type) => likedTypes.contains(type));
             if (hasCommonType) {
               final placeId = restaurant['place_id'];
+              // 僅對主流程未請求過、且快取沒有的 placeId 預載入
               if (placeId != null && !_fetchedPlaceIds.contains(placeId) && !_placeDetailsCache.containsKey(placeId)) {
                 _addToBatchQueue(placeId);
               }
@@ -2467,6 +2466,29 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   Set<String> _fetchedPlaceIds = {};
+  int _lastFetchTotal = 0;
+  int _startNearby = 0;
+  int _startDetails = 0;
+  int _startPhotos = 0;
+  // 1. 新增基準點變數
+  int _baseNearby = 0;
+  int _baseDetails = 0;
+  int _basePhotos = 0;
+  // 2. 清除快取或重新抓資料時重設基準點與 _lastFetchTotal
+  void _resetApiFetchCounter() {
+    _baseNearby = nearbySearchCount;
+    _baseDetails = placeDetailsCount;
+    _basePhotos = photoRequestCount;
+    _lastFetchTotal = 0;
+    setState(() {});
+  }
+  // 4. 每次 API 請求後，更新 _lastFetchTotal
+  void _updateLastFetchTotal() {
+    _lastFetchTotal = (nearbySearchCount - _baseNearby) +
+                    (placeDetailsCount - _baseDetails) +
+                    (photoRequestCount - _basePhotos);
+    setState(() {});
+  }
 }
 
 class RestaurantDetailPage extends StatelessWidget {
