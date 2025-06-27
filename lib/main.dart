@@ -59,7 +59,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   int selectedIndex = 0;
   double? currentLat;
   double? currentLng;
-  double searchRadius = 5.0;
+  double searchRadius = 2.0; // 改為預設 2 公里
   bool onlyShowOpen = true;
   Position? _currentPosition;
   bool isLoading = true;
