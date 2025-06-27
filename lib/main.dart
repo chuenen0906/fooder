@@ -12,6 +12,8 @@ import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/restaurant_json_service.dart';
+import 'services/user_id_service.dart';
+import 'services/log_service.dart';
 
 void main() async {
   await dotenv.load();
@@ -43,6 +45,11 @@ class NearbyFoodSwipePage extends StatefulWidget {
 
 class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
   final String apiKey = dotenv.env['GOOGLE_API_KEY'] ?? ''; // 已更新 API key
+  
+  // 新增：用戶 ID 相關變數
+  String? _currentUserId;
+  bool _isCheckingUserId = true;
+  
   List<Map<String, dynamic>> fullRestaurantList = [];
   List<Map<String, dynamic>> currentRoundList = [];
   final List<String> liked = [];
@@ -252,6 +259,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   @override
   void initState() {
     super.initState();
+    
+    // 新增：檢查用戶 ID
+    _checkAndSetupUserId();
+    
     _loadApiRequestsToday();
     _loadApiUsageStats();
     if (useJson) {
@@ -305,6 +316,91 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     super.dispose();
   }
 
+  // 新增：用戶 ID 相關方法
+  Future<void> _checkAndSetupUserId() async {
+    final userId = await UserIdService.getUserId();
+    final isFirstLaunch = await UserIdService.isFirstLaunch();
+    
+    if (userId != null) {
+      // 已有用戶 ID，直接使用
+      setState(() {
+        _currentUserId = userId;
+        _isCheckingUserId = false;
+      });
+      print('👤 使用現有用戶 ID: $userId');
+    } else if (isFirstLaunch) {
+      // 首次啟動，顯示暱稱輸入對話框
+      _showNicknameDialog();
+    } else {
+      // 非首次啟動但沒有用戶 ID，生成預設 ID
+      final defaultUserId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+      await UserIdService.setUserId(defaultUserId);
+      setState(() {
+        _currentUserId = defaultUserId;
+        _isCheckingUserId = false;
+      });
+      print('👤 生成預設用戶 ID: $defaultUserId');
+    }
+  }
+
+  void _showNicknameDialog() {
+    final TextEditingController nicknameController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 不允許點擊外部關閉
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('歡迎使用 Fooder！'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('請輸入你的暱稱，方便我們為你提供更好的服務：'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nicknameController,
+                decoration: const InputDecoration(
+                  labelText: '暱稱',
+                  hintText: '例如：小明、阿傑',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+                onSubmitted: (value) => _saveNickname(value),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => _saveNickname(nicknameController.text),
+              child: const Text('確定'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveNickname(String nickname) async {
+    if (nickname.trim().isEmpty) {
+      nickname = 'user_${DateTime.now().millisecondsSinceEpoch}';
+    }
+    
+    await UserIdService.setUserId(nickname.trim());
+    await UserIdService.markAsNotFirstLaunch();
+    
+    setState(() {
+      _currentUserId = nickname.trim();
+      _isCheckingUserId = false;
+    });
+    
+    // 關閉對話框
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+    
+    print('👤 設定用戶暱稱: ${nickname.trim()}');
+  }
+
   // API 使用量摘要打印函數
   void printApiSummary() {
     print("🔢 API Usage Summary:");
@@ -330,6 +426,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     nearbySearchCount++;
     await prefs.setInt('nearbySearchCount_$today', nearbySearchCount);
     _updateLastFetchTotal();
+    
+    // 新增：記錄到 Google Sheets
+    if (_currentUserId != null) {
+      await LogService.logUserAction(_currentUserId!, 'nearby_search');
+    }
   }
   Future<void> _incrementPlaceDetailsCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -337,6 +438,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     placeDetailsCount++;
     await prefs.setInt('placeDetailsCount_$today', placeDetailsCount);
     _updateLastFetchTotal();
+    
+    // 新增：記錄到 Google Sheets
+    if (_currentUserId != null) {
+      await LogService.logUserAction(_currentUserId!, 'place_details');
+    }
   }
   Future<void> _incrementPhotoRequestCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -344,6 +450,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     photoRequestCount++;
     await prefs.setInt('photoRequestCount_$today', photoRequestCount);
     _updateLastFetchTotal();
+    
+    // 新增：記錄到 Google Sheets
+    if (_currentUserId != null) {
+      await LogService.logUserAction(_currentUserId!, 'place_photos');
+    }
   }
 
   Future<void> _incrementApiCall() async {
@@ -1098,6 +1209,29 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   @override
   Widget build(BuildContext context) {
+    // 新增：檢查用戶 ID 狀態
+    if (_isCheckingUserId) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/loading_pig.png',
+                width: 100,
+                height: 100,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '正在初始化...',
+                style: TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     if (isSplash) {
       return Scaffold(
         body: Stack(
