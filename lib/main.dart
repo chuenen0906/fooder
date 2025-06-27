@@ -721,9 +721,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     double centerLat = position.latitude;
     double centerLng = position.longitude;
 
-    // 搜尋到目標數量的 placeId
+    // 只取 Nearby Search 實際回傳的 placeIds
     List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
 
+    // 只對實際回傳的 placeIds 發送 Details/Photo 請求
     List<Future<Map<String, dynamic>?>> detailFutures = [];
     for (final placeId in placeIds) {
       if (_placeDetailsCache.containsKey(placeId)) {
@@ -737,6 +738,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
     final List<Map<String, dynamic>?> detailedRestaurants = await Future.wait(detailFutures);
 
+    // 過濾掉 null
     return detailedRestaurants.where((r) => r != null).cast<Map<String, dynamic>>().toList();
   }
 
@@ -2345,8 +2347,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     final restaurantsToPreload = fullRestaurantList.take(5).toList();
     for (final restaurant in restaurantsToPreload) {
       final placeId = restaurant['place_id'];
-      // 僅對主流程未請求過、且快取沒有的 placeId 預載入
-      if (placeId != null && !_fetchedPlaceIds.contains(placeId) && !_placeDetailsCache.containsKey(placeId)) {
+      // 僅對主流程未請求過、且快取沒有的 placeId 預載入，且不重複
+      if (placeId != null && !_fetchedPlaceIds.contains(placeId) && !_placeDetailsCache.containsKey(placeId) && !_batchPlaceDetailsQueue.contains(placeId)) {
         _addToBatchQueue(placeId);
       }
     }
