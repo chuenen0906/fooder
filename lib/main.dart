@@ -84,8 +84,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   final String _photoUrlCacheKey = 'photo_url_cache';
   
   // 新增：API 請求限制
-  final int _maxApiCallsPerMinute = 60; // 每分鐘最多 60 次 API 呼叫
-  final int _maxApiCallsPerDay = 1000; // 每天最多 1000 次 API 呼叫
+  final int _maxApiCallsPerMinute = 50; // 每分鐘最多 50 次 API 呼叫
+  int get _maxApiCallsPerDay => _disablePhotosForTesting ? 500 : 150; // 開發者模式500，使用者模式150
   int _apiCallsThisMinute = 0;
   int _apiCallsToday = 0;
   DateTime _lastMinuteReset = DateTime.now();
@@ -1642,11 +1642,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Stack(
                   children: [
-                    Align(
-                      alignment: Alignment.topRight,
+                    // 右上角打叉
+                    Positioned(
+                      top: 0,
+                      right: 0,
                       child: IconButton(
                         icon: const Icon(Icons.close, color: Colors.white),
                         onPressed: () => setState(() => showApiUsage = false),
@@ -1654,32 +1655,41 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                         constraints: BoxConstraints(),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    _buildApiUsageRow('Nearby Search', nearbySearchCount, Colors.blue, fontSize: 10, numberFontSize: 10),
-                    _buildApiUsageRow('Place Details', placeDetailsCount, Colors.green, fontSize: 10, numberFontSize: 10),
-                    _buildApiUsageRow('Place Photos', photoRequestCount, Colors.orange, fontSize: 10, numberFontSize: 10),
-                    const Divider(color: Colors.white54, height: 2),
-                    _buildApiUsageRow('今日總計', nearbySearchCount + placeDetailsCount + photoRequestCount, Colors.purple, fontSize: 10, fontWeight: FontWeight.bold, numberFontSize: 10),
-                    const Divider(color: Colors.white54, height: 2),
-                    _buildApiUsageRow('預估成本', _calculateEstimatedCost().toStringAsFixed(3), Colors.yellow, isCost: false, fontSize: 10, fontWeight: FontWeight.bold, numberFontSize: 10),
-                    const SizedBox(height: 2),
-                    // 新增：快取統計顯示
-                    _buildApiUsageRow('SQLite 快取', _cacheStats['total_entries'] ?? 0, Colors.cyan, fontSize: 10, numberFontSize: 10),
-                    if (_cacheStats['oldest_entry'] != null) ...[
-                      Text(
-                        '最舊資料: ${DateFormat('MM/dd').format(_cacheStats['oldest_entry'])}',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 2),
-                    Text(
-                      '限制：每分鐘 $_maxApiCallsPerMinute 次，每日 $_maxApiCallsPerDay 次',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 9,
+                    // 內容
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, right: 2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 4),
+                          _buildApiUsageRow('Nearby Search', nearbySearchCount, Colors.blue, fontSize: 10, numberFontSize: 10),
+                          _buildApiUsageRow('Place Details', placeDetailsCount, Colors.green, fontSize: 10, numberFontSize: 10),
+                          _buildApiUsageRow('Place Photos', photoRequestCount, Colors.orange, fontSize: 10, numberFontSize: 10),
+                          const Divider(color: Colors.white54, height: 2),
+                          _buildApiUsageRow('今日總計', nearbySearchCount + placeDetailsCount + photoRequestCount, Colors.purple, fontSize: 10, fontWeight: FontWeight.bold, numberFontSize: 10),
+                          const Divider(color: Colors.white54, height: 2),
+                          _buildApiUsageRow('預估成本', _calculateEstimatedCost().toStringAsFixed(3), Colors.yellow, isCost: false, fontSize: 10, fontWeight: FontWeight.bold, numberFontSize: 10),
+                          const SizedBox(height: 2),
+                          // 新增：快取統計顯示
+                          _buildApiUsageRow('SQLite 快取', _cacheStats['total_entries'] ?? 0, Colors.cyan, fontSize: 10, numberFontSize: 10),
+                          if (_cacheStats['oldest_entry'] != null) ...[
+                            Text(
+                              '最舊資料: ${DateFormat('MM/dd').format(_cacheStats['oldest_entry'])}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 2),
+                          Text(
+                            '限制：每分鐘 $_maxApiCallsPerMinute 次，每日 $_maxApiCallsPerDay 次',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
