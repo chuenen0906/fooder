@@ -14,6 +14,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/restaurant_json_service.dart';
 import 'services/user_id_service.dart';
 import 'services/log_service.dart';
+import 'services/place_details_cache_service.dart';
 
 void main() async {
   await dotenv.load();
@@ -151,6 +152,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   // 新增：API 使用量顯示
   bool showApiUsage = false;
+  
+  // 新增：快取統計變數
+  Map<String, dynamic> _cacheStats = {'total_entries': 0, 'oldest_entry': null};
 
   // 新增：開發模式開關 - 關閉照片載入以節省 API 用量
   bool _disablePhotosForTesting = true; // 設為 true 可節省 API 用量
@@ -265,6 +269,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     
     _loadApiRequestsToday();
     _loadApiUsageStats();
+    
+    // 新增：載入快取統計
+    _loadCacheStats();
+    
     if (useJson) {
       loadJsonData();
     } else {
@@ -418,6 +426,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     nearbySearchCount = prefs.getInt('nearbySearchCount_$today') ?? 0;
     placeDetailsCount = prefs.getInt('placeDetailsCount_$today') ?? 0;
     photoRequestCount = prefs.getInt('photoRequestCount_$today') ?? 0;
+  }
+
+  // 新增：載入快取統計
+  Future<void> _loadCacheStats() async {
+    try {
+      final stats = await PlaceDetailsCacheService.getCacheStats();
+      setState(() {
+        _cacheStats = stats;
+      });
+      print('📊 快取統計: ${stats['total_entries']} 筆資料');
+    } catch (e) {
+      print('❌ 載入快取統計失敗: $e');
+    }
   }
 
   Future<void> _incrementNearbySearchCount() async {
@@ -927,28 +948,40 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       return null;
     }
 
-    // 1. 優先從獨立快取讀取
+    // 1. 優先從 SQLite 快取讀取
+    try {
+      final cachedData = await PlaceDetailsCacheService.getPlaceDetails(placeId);
+      if (cachedData != null) {
+        print('✅ 從 SQLite 快取獲取: $placeId');
+        final Map<String, dynamic> decodedDetails = json.decode(cachedData);
+        return decodedDetails;
+      }
+    } catch (e) {
+      print('❌ SQLite 快取讀取失敗: $e');
+    }
+
+    // 2. 從記憶體快取讀取
     if (_placeDetailsCache.containsKey(placeId)) {
-      print('✅ Using cached details for $placeId');
+      print('✅ 從記憶體快取獲取: $placeId');
       _updateRestaurantAccessCount(placeId); // 更新訪問次數
       final cachedJson = _placeDetailsCache[placeId]!;
       final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
       return decodedDetails;
     }
 
-    // 2. 檢查是否正在請求中
+    // 3. 檢查是否正在請求中
     if (_isApiRequestPending(placeId)) {
       print('⏳ Place details request already pending for $placeId');
       return null;
     }
 
-    // 3. 檢查冷卻時間
+    // 4. 檢查冷卻時間
     if (!_canMakeApiCallAfterCooldown(placeId)) {
       print('⏰ Place details request in cooldown for $placeId');
       return null;
     }
 
-    // 4. 如果快取沒有，才從 API 獲取
+    // 5. 如果快取沒有，才從 API 獲取
     try {
       _addPendingRequest(placeId);
       _lastApiCallTime[placeId] = DateTime.now();
@@ -1002,10 +1035,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           'photo_urls': json.encode(photoUrls), // 只存一張
         };
 
-        // 3. 存入快取
+        // 6. 存入 SQLite 快取
+        try {
+          await PlaceDetailsCacheService.savePlaceDetails(placeId, json.encode(detailsMapDynamic));
+          // 更新快取統計
+          await _loadCacheStats();
+        } catch (e) {
+          print('❌ SQLite 快取儲存失敗: $e');
+        }
+
+        // 7. 存入記憶體快取
         _savePlaceDetailsToCache(placeId, detailsMapDynamic);
 
-        // 4. 回傳 Map<String, String>
+        // 8. 回傳 Map<String, String>
         return detailsMapDynamic;
       }
       return null;
@@ -1364,6 +1406,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
                   }
                   break;
+                case 'refresh_cache_stats':
+                  await _loadCacheStats();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('快取統計已更新: ${_cacheStats['total_entries']} 筆資料'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  break;
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -1374,6 +1425,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     Icon(_disablePhotosForTesting ? Icons.developer_mode : Icons.photo_library),
                     const SizedBox(width: 8),
                     const Text('切換開發模式'),
+                  ],
+                ),
+              ),
+              // 新增：API 使用量（所有模式都顯示）
+              PopupMenuItem<String>(
+                value: 'api_usage',
+                child: Row(
+                  children: [
+                    const Icon(Icons.analytics),
+                    const SizedBox(width: 8),
+                    const Text('API 使用量'),
                   ],
                 ),
               ),
@@ -1401,22 +1463,23 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 ),
                 const PopupMenuDivider(),
                 PopupMenuItem<String>(
-                  value: 'api_usage',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.analytics),
-                      const SizedBox(width: 8),
-                      const Text('API 使用量'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
                   value: 'reset_api',
                   child: Row(
                     children: [
                       const Icon(Icons.refresh, color: Colors.orange),
                       const SizedBox(width: 8),
                       const Text('重置 API 計數器'),
+                    ],
+                  ),
+                ),
+                // 新增：重新整理快取統計
+                PopupMenuItem<String>(
+                  value: 'refresh_cache_stats',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.storage, color: Colors.cyan),
+                      const SizedBox(width: 8),
+                      const Text('重新整理快取統計'),
                     ],
                   ),
                 ),
@@ -1574,7 +1637,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               top: 16,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(12),
@@ -1582,40 +1645,43 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'API 使用量',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => setState(() => showApiUsage = false),
-                        ),
-                      ],
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => setState(() => showApiUsage = false),
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildApiUsageRow('Nearby Search', nearbySearchCount, Colors.blue),
-                    _buildApiUsageRow('Place Details', placeDetailsCount, Colors.green),
-                    _buildApiUsageRow('Place Photos', photoRequestCount, Colors.orange),
-                    const Divider(color: Colors.white54, height: 20),
-                    _buildApiUsageRow('今日總計', nearbySearchCount + placeDetailsCount + photoRequestCount, Colors.purple),
-                    const Divider(color: Colors.white54, height: 20),
-                    _buildApiUsageRow('預估成本', _calculateEstimatedCost().toStringAsFixed(3), Colors.yellow, isCost: true),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 4),
+                    _buildApiUsageRow('Nearby Search', nearbySearchCount, Colors.blue, fontSize: 10, numberFontSize: 10),
+                    _buildApiUsageRow('Place Details', placeDetailsCount, Colors.green, fontSize: 10, numberFontSize: 10),
+                    _buildApiUsageRow('Place Photos', photoRequestCount, Colors.orange, fontSize: 10, numberFontSize: 10),
+                    const Divider(color: Colors.white54, height: 2),
+                    _buildApiUsageRow('今日總計', nearbySearchCount + placeDetailsCount + photoRequestCount, Colors.purple, fontSize: 10, fontWeight: FontWeight.bold, numberFontSize: 10),
+                    const Divider(color: Colors.white54, height: 2),
+                    _buildApiUsageRow('預估成本', _calculateEstimatedCost().toStringAsFixed(3), Colors.yellow, isCost: false, fontSize: 10, fontWeight: FontWeight.bold, numberFontSize: 10),
+                    const SizedBox(height: 2),
+                    // 新增：快取統計顯示
+                    _buildApiUsageRow('SQLite 快取', _cacheStats['total_entries'] ?? 0, Colors.cyan, fontSize: 10, numberFontSize: 10),
+                    if (_cacheStats['oldest_entry'] != null) ...[
+                      Text(
+                        '最舊資料: ${DateFormat('MM/dd').format(_cacheStats['oldest_entry'])}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 2),
                     Text(
                       '限制：每分鐘 $_maxApiCallsPerMinute 次，每日 $_maxApiCallsPerDay 次',
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 12,
+                        fontSize: 9,
                       ),
                     ),
-                    Text('今日全部 API 請求總次數：${nearbySearchCount + placeDetailsCount + photoRequestCount}'),
                   ],
                 ),
               ),
@@ -2380,7 +2446,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
   // --- END ---
 
-  Widget _buildApiUsageRow(String title, dynamic count, Color color, {bool isCost = false}) {
+  Widget _buildApiUsageRow(String title, dynamic count, Color color, {bool isCost = false, double fontSize = 16, FontWeight fontWeight = FontWeight.bold, double? numberFontSize}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -2388,15 +2454,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           title,
           style: TextStyle(
             color: color,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
           ),
         ),
         Text(
           '$count',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: numberFontSize ?? 16,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -2405,7 +2471,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             '\$$count',
             style: TextStyle(
               color: Colors.yellow,
-              fontSize: 16,
+              fontSize: numberFontSize ?? 16,
               fontWeight: FontWeight.bold,
             ),
           ),
