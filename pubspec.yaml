@@ -36,6 +36,16 @@ flutter:
     - assets/loading_pig.png
     - assets/restaurants/
     - assets/restaurants_collection/
+    - assets/restaurants_collection/ahan/
+    - assets/restaurants_collection/aming/
+    - assets/restaurants_collection/asong/
+    - assets/restaurants_collection/atang/
+    - assets/restaurants_collection/chikan/
+    - assets/restaurants_collection/chous/
+    - assets/restaurants_collection/douhsiao/
+    - assets/restaurants_collection/fusheng/
+    - assets/restaurants_collection/tongji/
+    - assets/restaurants_collection/yifeng/
     - .env
     - lib/data/tainan_restaurants.json
 

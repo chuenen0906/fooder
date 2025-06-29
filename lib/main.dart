@@ -2265,11 +2265,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                             child: Stack(
                               children: [
-                                _buildImageWidget(
-                                  photoUrls.first,
+                                SizedBox(
                                   height: 200,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
+                                  child: PageView.builder(
+                                    itemCount: photoUrls.length,
+                                    itemBuilder: (context, pageIndex) {
+                                      return _buildImageWidget(
+                                        photoUrls[pageIndex],
+                                        height: 200,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  ),
                                 ),
                                 Positioned(
                                   left: 0,
