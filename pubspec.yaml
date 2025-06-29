@@ -24,6 +24,7 @@ dependencies:
   sqflite: ^2.3.0
   path_provider: ^2.1.1
   path: ^1.8.3
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +47,17 @@ flutter:
     - assets/restaurants_collection/fusheng/
     - assets/restaurants_collection/tongji/
     - assets/restaurants_collection/yifeng/
+    - assets/restaurants_collection/shengli/
+    - assets/restaurants_collection/achuan/
+    - assets/restaurants_collection/huaijiu/
+    - assets/restaurants_collection/izuminami/
+    - assets/restaurants_collection/caijia/
+    - assets/restaurants_collection/shijingjiu/
+    - assets/restaurants_collection/jinde/
+    - assets/restaurants_collection/weijia/
+    - assets/restaurants_collection/lanji/
+    - assets/restaurants_collection/xiezhanggui/
+    - assets/restaurants_collection/shanghaochi/
     - .env
     - lib/data/tainan_restaurants.json
 

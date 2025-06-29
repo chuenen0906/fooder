@@ -43,6 +43,7 @@ flutter:
     - assets/restaurants_collection/chikan/
     - assets/restaurants_collection/chous/
     - assets/restaurants_collection/yifeng/
+    - assets/restaurants_collection/acun/
     - .env
     - lib/data/tainan_restaurants.json
 
