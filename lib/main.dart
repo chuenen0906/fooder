@@ -157,7 +157,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   Map<String, dynamic> _cacheStats = {'total_entries': 0, 'oldest_entry': null};
 
   // 新增：開發模式開關 - 關閉照片載入以節省 API 用量
-  bool _disablePhotosForTesting = true; // 設為 true 可節省 API 用量
+  bool _disablePhotosForTesting = false; // 設為 false 為使用者模式（開啟照片載入）
   
   // 新增：可調整的餐廳搜尋數量
   int _targetRestaurantCount = 20; // 使用者模式：每次搜尋 20 家
@@ -321,6 +321,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   @override
   void dispose() {
     _swipeAnimationController.dispose();
+    _titleTapTimer?.cancel();
     super.dispose();
   }
 
@@ -1290,7 +1291,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('這餐想來點？'),
+        title: GestureDetector(
+          onTap: _handleTitleTap,
+          child: const Text('這餐想來點？'),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
@@ -1418,16 +1422,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               }
             },
             itemBuilder: (BuildContext context) => [
-              PopupMenuItem<String>(
-                value: 'dev_mode',
-                child: Row(
-                  children: [
-                    Icon(_disablePhotosForTesting ? Icons.developer_mode : Icons.photo_library),
-                    const SizedBox(width: 8),
-                    const Text('切換開發模式'),
-                  ],
-                ),
-              ),
               // 新增：API 使用量（所有模式都顯示）
               PopupMenuItem<String>(
                 value: 'api_usage',
@@ -1439,8 +1433,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   ],
                 ),
               ),
-              if (_disablePhotosForTesting) ...[
+              // 開發者模式選項（只有啟用時才顯示）
+              if (_showDeveloperOptions) ...[
                 const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: 'dev_mode',
+                  child: Row(
+                    children: [
+                      Icon(_disablePhotosForTesting ? Icons.developer_mode : Icons.photo_library),
+                      const SizedBox(width: 8),
+                      const Text('切換開發模式'),
+                    ],
+                  ),
+                ),
                 PopupMenuItem<String>(
                   value: 'refresh',
                   child: Row(
@@ -2700,6 +2705,45 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     (placeDetailsCount - _baseDetails) +
                     (photoRequestCount - _basePhotos);
     setState(() {});
+  }
+
+  // 新增：開發者模式觸發機制
+  int _titleTapCount = 0;
+  bool _showDeveloperOptions = false;
+  Timer? _titleTapTimer;
+  
+  // 新增：開發者模式觸發方法
+  void _handleTitleTap() {
+    _titleTapCount++;
+    _titleTapTimer?.cancel();
+    
+    if (_titleTapCount >= 5) {
+      setState(() {
+        _showDeveloperOptions = !_showDeveloperOptions; // 切換顯示/隱藏狀態
+        _titleTapCount = 0;
+      });
+      
+      // 根據狀態顯示不同的提示
+      if (_showDeveloperOptions) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🔧 開發者模式已啟用'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('👤 已切回使用者模式'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } else {
+      _titleTapTimer = Timer(const Duration(seconds: 2), () {
+        _titleTapCount = 0;
+      });
+    }
   }
 }
 
