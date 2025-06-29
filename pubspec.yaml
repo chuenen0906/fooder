@@ -34,6 +34,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/loading_pig.png
+    - assets/restaurants/
+    - assets/restaurants_collection/
     - .env
     - lib/data/tainan_restaurants.json
 

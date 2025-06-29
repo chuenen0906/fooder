@@ -205,6 +205,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   
   // 新增：批次處理 Place Details
   void _addToBatchQueue(String placeId) {
+    // 在 JSON 模式下跳過 Place Details 請求
+    if (useJson) {
+      print("🚫 Place Details 批次請求已跳過（JSON 模式）: $placeId");
+      return;
+    }
+    
     if (!_batchPlaceDetailsQueue.contains(placeId)) {
       _batchPlaceDetailsQueue.add(placeId);
     }
@@ -217,6 +223,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
   
   Future<void> _processBatchQueue() async {
+    // 在 JSON 模式下跳過 Place Details 請求
+    if (useJson) {
+      print("🚫 Place Details 請求已跳過（JSON 模式）");
+      return;
+    }
+    
     if (_batchPlaceDetailsQueue.isEmpty) return;
     
     final placeIds = List<String>.from(_batchPlaceDetailsQueue);
@@ -943,6 +955,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   Future<Map<String, dynamic>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
+    // 在 JSON 模式下跳過 Place Details 請求
+    if (useJson) {
+      print("🚫 Place Details API 請求已跳過（JSON 模式）: $placeId");
+      return null;
+    }
+    
     // 檢查 API 限制
     if (!_canMakeApiCall()) {
       print("🚫 Place Details API call blocked due to rate limiting for $placeId");
@@ -1842,19 +1860,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 // 餐廳圖片
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: photoUrls.first,
+                  child: _buildImageWidget(
+                    photoUrls.first,
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[200],
-                      height: 150,
-                      child: const Center(child: Icon(Icons.error, color: Colors.red)),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -2027,22 +2037,11 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           children: [
                             ClipRRect(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                              child: CachedNetworkImage(
-                                imageUrl: photoUrls.first,
+                              child: _buildImageWidget(
+                                photoUrls.first,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => Center(
-                                  child: SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Colors.grey[200],
-                                  child: const Center(child: Icon(Icons.error, color: Colors.red)),
-                                ),
                               ),
                             ),
                             // 營業狀態
@@ -2266,7 +2265,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                             child: Stack(
                               children: [
-                                Image.network(
+                                _buildImageWidget(
                                   photoUrls.first,
                                   height: 200,
                                   width: double.infinity,
@@ -2663,23 +2662,30 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   Future<void> loadJsonData() async {
-    if (!_canSearchToday()) {
+    setState(() {
+      isLoading = true;
+      _loadingText = '載入本地 JSON 資料...';
+    });
+    
+    try {
+      final data = await RestaurantJsonService.loadRestaurants();
+      setState(() {
+        fullRestaurantList = List<Map<String, dynamic>>.from(data);
+        currentRoundList = List.from(fullRestaurantList)..shuffle();
+        isLoading = false;
+        isSplash = false;
+        _loadingText = '已載入本地 JSON 資料';
+      });
+      
+      // 更新隨機標題
+      _updateRound1Title();
+    } catch (e) {
       setState(() {
         isLoading = false;
         isSplash = false;
-        _loadingText = '今日 API 請求已達上限，請明天再試';
+        _loadingText = '載入 JSON 資料失敗: $e';
       });
-      return;
     }
-    await _incrementApiRequestsToday();
-    final data = await RestaurantJsonService.loadRestaurants();
-    setState(() {
-      fullRestaurantList = List<Map<String, dynamic>>.from(data);
-      currentRoundList = List.from(fullRestaurantList)..shuffle();
-      isLoading = false;
-      isSplash = false;
-      _loadingText = '已載入本地 JSON 資料';
-    });
   }
 
   Set<String> _fetchedPlaceIds = {};
@@ -2745,6 +2751,53 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       });
     }
   }
+
+  // 新增：通用圖片載入 Widget
+  Widget _buildImageWidget(String imagePath, {double? width, double? height, BoxFit fit = BoxFit.cover}) {
+    print("🖼️ 載入圖片: $imagePath"); // 新增除錯輸出
+    
+    if (imagePath.startsWith('assets/')) {
+      // 本地圖片
+      print("📁 使用本地圖片: $imagePath"); // 新增除錯輸出
+      return Image.asset(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          print("❌ 本地圖片載入失敗: $imagePath, 錯誤: $error"); // 新增除錯輸出
+          return Container(
+            color: Colors.grey[200],
+            width: width,
+            height: height,
+            child: const Center(child: Icon(Icons.error, color: Colors.red)),
+          );
+        },
+      );
+    } else {
+      // 網路圖片
+      print("🌐 使用網路圖片: $imagePath"); // 新增除錯輸出
+      return CachedNetworkImage(
+        imageUrl: imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (context, url) => Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey[200],
+          width: width,
+          height: height,
+          child: const Center(child: Icon(Icons.error, color: Colors.red)),
+        ),
+      );
+    }
+  }
 }
 
 class RestaurantDetailPage extends StatelessWidget {
@@ -2762,6 +2815,46 @@ class RestaurantDetailPage extends StatelessWidget {
     required this.classifyRestaurant,
     required this.getOpenStatus,
   });
+
+  // 新增：通用圖片載入 Widget
+  Widget _buildImageWidget(String imagePath, {double? width, double? height, BoxFit fit = BoxFit.cover}) {
+    if (imagePath.startsWith('assets/')) {
+      // 本地圖片
+      return Image.asset(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: Colors.grey[200],
+          width: width,
+          height: height,
+          child: const Center(child: Icon(Icons.error, color: Colors.red)),
+        ),
+      );
+    } else {
+      // 網路圖片
+      return CachedNetworkImage(
+        imageUrl: imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        placeholder: (context, url) => Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey[200],
+          width: width,
+          height: height,
+          child: const Center(child: Icon(Icons.error, color: Colors.red)),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2832,17 +2925,11 @@ class RestaurantDetailPage extends StatelessWidget {
               child: PageView.builder(
                 itemCount: photoUrls.length,
                 itemBuilder: (context, index) {
-                  return CachedNetworkImage(
-                    imageUrl: photoUrls[index],
+                  return _buildImageWidget(
+                    photoUrls[index],
                     height: 250,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[200],
-                      height: 250,
-                      child: const Center(child: Icon(Icons.error, color: Colors.red)),
-                    ),
                   );
                 },
               ),

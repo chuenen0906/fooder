@@ -8,7 +8,7 @@
       "price_level": 2,
       "types": ["中式", "麵食"],
       "photo_urls": [
-        "https://via.placeholder.com/400x300.png?text=度小月擔仔麵"
+        "assets/restaurants_collection/douhsiao/douhsiao_1.jpg"
       ],
       "lat": 22.9971,
       "lng": 120.1968,
@@ -24,7 +24,7 @@
       "price_level": 1,
       "types": ["中式", "粥品"],
       "photo_urls": [
-        "https://via.placeholder.com/400x300.png?text=阿堂鹹粥"
+        "assets/restaurants_collection/atang/atang_1.jpg"
       ],
       "lat": 22.9956,
       "lng": 120.1962,
@@ -40,7 +40,7 @@
       "price_level": 1,
       "types": ["甜點", "豆花"],
       "photo_urls": [
-        "https://via.placeholder.com/400x300.png?text=同記安平豆花"
+        "assets/restaurants_collection/tongji/tongji_1.jpg"
       ],
       "lat": 23.0001,
       "lng": 120.1612,
@@ -55,9 +55,7 @@
       "rating": 4.1,
       "price_level": 2,
       "types": ["中式", "海鮮"],
-      "photo_urls": [
-        "https://via.placeholder.com/400x300.png?text=周氏蝦捲"
-      ],
+      "photo_urls": [],
       "lat": 22.9989,
       "lng": 120.1625,
       "open_now": true,
@@ -71,13 +69,83 @@
       "rating": 4.4,
       "price_level": 2,
       "types": ["中式", "麵食"],
-      "photo_urls": [
-        "https://via.placeholder.com/400x300.png?text=赤崁擔仔麵"
-      ],
+      "photo_urls": [],
       "lat": 22.9965,
       "lng": 120.1985,
       "open_now": true,
       "phone": "06-225-0036",
+      "website": ""
+    },
+    {
+      "id": "6",
+      "name": "阿明豬心冬粉",
+      "address": "台南市中西區保安路72號",
+      "rating": 4.6,
+      "price_level": 1,
+      "types": ["中式", "冬粉"],
+      "photo_urls": [],
+      "lat": 22.9945,
+      "lng": 120.1955,
+      "open_now": true,
+      "phone": "06-223-3741",
+      "website": ""
+    },
+    {
+      "id": "7",
+      "name": "富盛號碗粿",
+      "address": "台南市中西區西門路二段333巷8號",
+      "rating": 4.3,
+      "price_level": 1,
+      "types": ["中式", "碗粿"],
+      "photo_urls": [
+        "assets/restaurants_collection/fusheng/fusheng_1.jpg"
+      ],
+      "lat": 22.9958,
+      "lng": 120.1972,
+      "open_now": true,
+      "phone": "06-227-4101",
+      "website": ""
+    },
+    {
+      "id": "8",
+      "name": "阿松割包",
+      "address": "台南市中西區國華街三段181號",
+      "rating": 4.2,
+      "price_level": 1,
+      "types": ["中式", "割包"],
+      "photo_urls": [],
+      "lat": 22.9962,
+      "lng": 120.1968,
+      "open_now": true,
+      "phone": "06-220-0898",
+      "website": ""
+    },
+    {
+      "id": "9",
+      "name": "義豐阿川冬瓜茶",
+      "address": "台南市中西區永福路二段212號",
+      "rating": 4.0,
+      "price_level": 1,
+      "types": ["飲料", "冬瓜茶"],
+      "photo_urls": [],
+      "lat": 22.9975,
+      "lng": 120.1975,
+      "open_now": true,
+      "phone": "06-222-3779",
+      "website": ""
+    },
+    {
+      "id": "10",
+      "name": "阿憨鹹粥",
+      "address": "台南市中西區公園南路169號",
+      "rating": 4.4,
+      "price_level": 1,
+      "types": ["中式", "粥品"],
+      "photo_urls": [],
+      "lat": 22.9935,
+      "lng": 120.1945,
+      "open_now": true,
+      "phone": "06-221-8699",
       "website": ""
     }
   ]
