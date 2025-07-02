@@ -8,6 +8,7 @@
       "price_level": 2,
       "types": ["中式", "麵食"],
       "photo_urls": [
+        "assets/restaurants_collection/douhsiao/douhsiao_1.jpg",
         "assets/restaurants_collection/douhsiao/douhsiao_4.jpg"
       ],
       "lat": 22.9971,
@@ -120,23 +121,7 @@
       "phone": "06-220-0898",
       "website": ""
     },
-    {
-      "id": "9",
-      "name": "義豐阿川冬瓜茶",
-      "address": "台南市中西區永福路二段212號",
-      "rating": 4.0,
-      "price_level": 1,
-      "types": ["飲料", "冬瓜茶"],
-      "photo_urls": [
-        "assets/restaurants_collection/yifeng/yifeng_1.jpg",
-        "assets/restaurants_collection/yifeng/yifeng_2.jpg"
-      ],
-      "lat": 22.9975,
-      "lng": 120.1975,
-      "open_now": true,
-      "phone": "06-222-3779",
-      "website": ""
-    },
+
     {
       "id": "10",
       "name": "阿憨鹹粥",
@@ -161,8 +146,7 @@
       "price_level": 1,
       "types": ["早餐", "中式"],
       "photo_urls": [
-        "assets/restaurants_collection/shengli/shengli_1.jpg",
-        "assets/restaurants_collection/shengli/shengli_2.jpg"
+        "assets/restaurants_collection/shengli/shengli_1.jpg"
       ],
       "lat": 22.9900,
       "lng": 120.2200,
@@ -178,8 +162,7 @@
       "price_level": 1,
       "types": ["甜品", "冰品"],
       "photo_urls": [
-        "assets/restaurants_collection/achuan/achuan_1.jpg",
-        "assets/restaurants_collection/achuan/achuan_2.jpg"
+        "assets/restaurants_collection/achuan/achuan_1.jpg"
       ],
       "lat": 22.9950,
       "lng": 120.1950,
@@ -458,7 +441,10 @@
       "rating": 4.3,
       "price_level": 1,
       "types": ["飯類", "燒肉"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/yongle/yongle_1.jpg",
+        "assets/restaurants_collection/yongle/yongle_2.jpg"
+      ],
       "lat": 22.9950,
       "lng": 120.1950,
       "open_now": true,
@@ -468,13 +454,15 @@
     {
       "id": "31",
       "name": "阿娟肉粽滷麵",
-      "address": "台南市北區",
-      "rating": 4.2,
+      "address": "台南市北區公園南路XX號",
+      "rating": 4.3,
       "price_level": 1,
-      "types": ["小吃", "肉粽"],
-      "photo_urls": [],
-      "lat": 23.0000,
-      "lng": 120.2000,
+      "types": ["中式", "肉粽", "滷麵"],
+      "photo_urls": [
+        "assets/restaurants_collection/ajuan/ajuan_1.jpg"
+      ],
+      "lat": 23.0123,
+      "lng": 120.2101,
       "open_now": true,
       "phone": "",
       "website": ""
@@ -486,7 +474,10 @@
       "rating": 4.4,
       "price_level": 2,
       "types": ["米粉", "海鮮"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/qiujia/qiujia_1.jpg",
+        "assets/restaurants_collection/qiujia/qiujia_2.jpg"
+      ],
       "lat": 22.9950,
       "lng": 120.1950,
       "open_now": true,
@@ -500,7 +491,10 @@
       "rating": 4.1,
       "price_level": 1,
       "types": ["麵線", "中式"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/chengjiang/chengjiang_1.jpg",
+        "assets/restaurants_collection/chengjiang/chengjiang_2.jpg"
+      ],
       "lat": 23.0000,
       "lng": 120.2000,
       "open_now": true,
@@ -545,7 +539,10 @@
       "rating": 4.4,
       "price_level": 2,
       "types": ["魚類粥品", "海鮮"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/axing/axing_1.jpg",
+        "assets/restaurants_collection/axing/axing_2.jpg"
+      ],
       "lat": 23.0000,
       "lng": 120.1600,
       "open_now": true,
@@ -676,8 +673,7 @@
       "types": ["炒麵", "海鮮"],
       "photo_urls": [
         "assets/restaurants_collection/ajiang/ajiang_1.jpg",
-        "assets/restaurants_collection/ajiang/ajiang_2.jpg",
-        "assets/restaurants_collection/ajiang/ajiang_3.jpg"
+        "assets/restaurants_collection/ajiang/ajiang_2.jpg"
       ],
       "lat": 22.9950,
       "lng": 120.1950,

@@ -1,7 +1,7 @@
 name: food_swipe_app
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.2+5
 
 environment:
   sdk: ^3.8.0
@@ -58,6 +58,11 @@ flutter:
     - assets/restaurants_collection/lanji/
     - assets/restaurants_collection/xiezhanggui/
     - assets/restaurants_collection/shanghaochi/
+    - assets/restaurants_collection/yejia/
+    - assets/restaurants_collection/yongle/
+    - assets/restaurants_collection/ajuan/
+    - assets/restaurants_collection/acun/
+    - assets/restaurants_collection/chengjiang/
     - .env
     - lib/data/tainan_restaurants.json
 

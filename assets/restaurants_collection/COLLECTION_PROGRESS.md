@@ -18,6 +18,7 @@
 - [x] atang_4.jpg (已下載並放置)
 
 ### ✅ 度小月擔仔麵 (douhsiao)
+- [x] douhsiao_1.jpg (已下載並放置)
 - [x] douhsiao_4.jpg (已下載並放置)
 
 ### ✅ 阿明豬心冬粉 (aming)
@@ -43,6 +44,9 @@
 ### ✅ 勝利早點 (shengli) - 第一批處理
 - [x] shengli_1.jpg (已下載並放置)
 - [x] shengli_2.jpg (已下載並放置)
+- [x] shengli_3.jpg (已下載並放置)
+- [x] shengli_4.jpg (已下載並放置)
+- [x] shengli_5.jpg (已下載並放置)
 
 ### ✅ 阿川古早味粉圓冰 (achuan) - 第一批處理
 - [x] achuan_1.jpg (已下載並放置)
@@ -84,7 +88,23 @@
 - [x] shanghaochi_1.jpg (已下載並放置)
 - [x] shanghaochi_2.jpg (已下載並放置)
 
+### ✅ 邱家小卷米粉 (qiujia) - 新增
+- [x] qiujia_1.jpg (已下載並放置)
+- [x] qiujia_2.jpg (已下載並放置)
+
+### ✅ 阿興虱目魚 (axing) - 新增
+- [x] axing_1.jpg (已下載並放置)
+- [x] axing_2.jpg (已下載並放置)
+
+### ✅ 阿江鱔魚意麵 (ajiang) - 新增
+- [x] ajiang_1.jpg (已下載並放置)
+- [x] ajiang_2.jpg (已下載並放置)
+
 ## 待收集照片的店家
+
+### ✅ 誠江號麵線 (chengjiang) - 新增
+- [x] chengjiang_1.jpg (已下載並放置)
+- [x] chengjiang_2.jpg (已下載並放置)
 
 ### ❌ 赤崁擔仔麵 (chikan)
 - [ ] chikan_1.jpg
