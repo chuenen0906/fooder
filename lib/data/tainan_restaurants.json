@@ -312,7 +312,10 @@
       "rating": 4.7,
       "price_level": 2,
       "types": ["牛肉湯", "中式"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/wenzhang/wenzhang_1.jpg",
+        "assets/restaurants_collection/wenzhang/wenzhang_2.jpg"
+      ],
       "lat": 23.0000,
       "lng": 120.1600,
       "open_now": true,
@@ -326,7 +329,10 @@
       "rating": 4.5,
       "price_level": 2,
       "types": ["牛肉湯", "中式"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/niujiazhuang/niujiazhuang_1.jpg",
+        "assets/restaurants_collection/niujiazhuang/niujiazhuang_2.jpg"
+      ],
       "lat": 22.9900,
       "lng": 120.2200,
       "open_now": true,
@@ -357,7 +363,10 @@
       "rating": 4.4,
       "price_level": 2,
       "types": ["牛肉湯", "中式"],
-      "photo_urls": [],
+      "photo_urls": [
+        "assets/restaurants_collection/xiluodian/xiluodian_1.jpg",
+        "assets/restaurants_collection/xiluodian/xiluodian_2.jpg"
+      ],
       "lat": 22.9950,
       "lng": 120.1950,
       "open_now": true,

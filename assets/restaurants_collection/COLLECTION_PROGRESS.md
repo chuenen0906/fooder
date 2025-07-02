@@ -60,13 +60,13 @@
 - [x] izuminami_1.jpg (已下載並放置)
 - [x] izuminami_2.jpg (已下載並放置)
 
-### ✅ 蔡家蚵嗲 (caijia) - 第一批處理
-- [x] caijia_1.jpg (已下載並放置)
-- [x] caijia_2.jpg (已下載並放置)
+### ✅ 蔡家蚵嗲 (caijia) - 第一批處理 (已更新照片)
+- [x] caijia_1.jpg (已更新 - 來自 [achingfoodie.tw](https://achingfoodie.tw/wp-content/uploads/20210630194620_54.jpg))
+- [x] caijia_2.jpg (已更新 - 來自 Google Images)
 
-### ✅ 石精臼蚵仔煎 (shijingjiu) - 第一批處理
-- [x] shijingjiu_1.jpg (已下載並放置)
-- [x] shijingjiu_2.jpg (已下載並放置)
+### ✅ 石精臼蚵仔煎 (shijingjiu) - 第一批處理 (已更新照片)
+- [x] shijingjiu_1.jpg (已更新 - 來自 [mimihan.tw](https://mimihan.tw/wp-content/uploads/pixnet/0b7a70bea35852309701e68126ee1cf0.jpg))
+- [x] shijingjiu_2.jpg (已更新 - 來自 Google Images)
 
 ### ✅ 金得春捲 (jinde) - 第一批處理
 - [x] jinde_1.jpg (已下載並放置)
@@ -106,27 +106,31 @@
 - [x] chengjiang_1.jpg (已下載並放置)
 - [x] chengjiang_2.jpg (已下載並放置)
 
+### ✅ 西羅殿牛肉湯 (xiluodian) - 新增
+- [x] xiluodian_1.jpg (已下載並放置)
+- [x] xiluodian_2.jpg (已下載並放置)
+
 ### ❌ 赤崁擔仔麵 (chikan)
 - [ ] chikan_1.jpg
 - [ ] chikan_2.jpg
 - [ ] chikan_3.jpg
 
-### ❌ 文章牛肉湯 (wenzhang)
-- [ ] wenzhang_1.jpg
-- [ ] wenzhang_2.jpg
+### ✅ 文章牛肉湯 (wenzhang) - 新增
+- [x] wenzhang_1.jpg (已下載並放置 - 來自 [自由時報](https://img.ltn.com.tw/Upload/playing/page/2022/02/16/220216-25886-4-KDM4f.jpg))
+- [x] wenzhang_2.jpg (已下載並放置 - 來自 [foodieteller.com](https://foodieteller.com/wp-content/uploads/20210306205035_20.jpg))
 
-### ❌ 牛家莊牛肉湯 (niujiazhuang)
-- [ ] niujiazhuang_1.jpg
-- [ ] niujiazhuang_2.jpg
+### ✅ 牛家莊牛肉湯 (niujiazhuang) - 新增
+- [x] niujiazhuang_1.jpg (已下載並放置 - 來自 Pixnet)
+- [x] niujiazhuang_2.jpg (已下載並放置 - 來自 Google Images)
 
 ### ❌ 其他剩餘餐廳 (約40家)
 - [ ] 待第二批處理
 
 ## 照片收集統計
 
-- **已完成**: 20 家店家
-- **待完成**: 約 30 家店家
-- **總進度**: 40% (20/50)
+- **已完成**: 23 家店家
+- **待完成**: 約 27 家店家
+- **總進度**: 46% (23/50)
 
 ## 處理批次
 

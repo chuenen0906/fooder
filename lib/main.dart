@@ -904,7 +904,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         await _incrementNearbySearchCount();
         print("📡 發送 Nearby Search，座標: $lat,$lng，半徑: $radius");
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-            'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
+            'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=小吃|攤販|夜市|food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
       } else {
         // As per Google's requirement, wait before making the next page request.
         await Future.delayed(const Duration(seconds: 2));
@@ -1008,7 +1008,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       await _incrementPlaceDetailsCount();
       print("📍 發送 Place Details，placeId: $placeId");
       
-      const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity';
+      const String fields = 'place_id,name,geometry/location,photos,rating,types,opening_hours/open_now,vicinity,formatted_address';
       final String detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&fields=$fields&key=$apiKey&language=zh-TW';
 
       final response = await http.get(Uri.parse(detailsUrl)).timeout(const Duration(seconds: 8));
@@ -1052,6 +1052,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           'photo_references': json.encode(photoReferences),
           'place_id': item['place_id'] ?? '',
           'photo_urls': json.encode(photoUrls), // 只存一張
+          // 新增：補上地址欄位
+          'vicinity': item['vicinity'] ?? '',
+          'address': item['formatted_address'] ?? '',
         };
 
         // 6. 存入 SQLite 快取
@@ -1833,6 +1836,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        final address = (restaurant['vicinity'] ?? restaurant['address'] ?? '').toString();
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -1877,6 +1881,27 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   ),
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 4),
+                // 地址（vicinity/address）
+                if (address.isNotEmpty)
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          address,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 8),
                 // 評分和距離
                 Row(
@@ -2213,6 +2238,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             onSwipe: handleSwipe,
             cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
               final restaurant = currentRoundList[index];
+              print(restaurant); // debug 資料內容
               double dist = double.tryParse(restaurant['distance'] ?? '') ?? 0;
               String distanceText = dist >= 1000
                   ? '${(dist / 1000).toStringAsFixed(1)} km'
@@ -2225,10 +2251,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 } catch (_) {}
               }
               final String typeText = classifyRestaurant(typesList, restaurant);
-              final rating = restaurant['rating'];
-              final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
+              final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
               final String openStatus = getOpenStatus(restaurant);
-              
               // 多圖輪播
               List<String> photoUrls = [];
               if (restaurant['photo_urls'] != null) {
@@ -2240,6 +2264,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 photoUrls = ['https://via.placeholder.com/400x300.png?text=No+Image'];
               }
               int currentPhotoIndex = photoPageIndex[index] ?? 0;
+              final address = (restaurant['vicinity'] ?? restaurant['address'] ?? '').toString();
+
               return SingleChildScrollView(
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),

@@ -63,6 +63,9 @@ flutter:
     - assets/restaurants_collection/ajuan/
     - assets/restaurants_collection/acun/
     - assets/restaurants_collection/chengjiang/
+    - assets/restaurants_collection/xiluodian/
+    - assets/restaurants_collection/wenzhang/
+    - assets/restaurants_collection/niujiazhuang/
     - .env
     - lib/data/tainan_restaurants.json
 
