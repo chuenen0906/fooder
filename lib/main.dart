@@ -15,6 +15,8 @@ import 'services/restaurant_json_service.dart';
 import 'services/user_id_service.dart';
 import 'services/log_service.dart';
 import 'services/place_details_cache_service.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui';
 
 void main() async {
   await dotenv.load();
@@ -904,7 +906,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         await _incrementNearbySearchCount();
         print("📡 發送 Nearby Search，座標: $lat,$lng，半徑: $radius");
         url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-            'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=小吃|攤販|夜市|food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
+            'location=$lat,$lng&radius=${min(50000.0, radius)}&keyword=food&language=zh-TW&key=$apiKey${onlyShowOpen ? "&opennow=true" : ""}';
       } else {
         // As per Google's requirement, wait before making the next page request.
         await Future.delayed(const Duration(seconds: 2));
@@ -1647,12 +1649,35 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           if (isLoading)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.1),
-                child: const Center(
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: CircularProgressIndicator(),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.5),
+                  // 加入模糊效果
+                  backgroundBlendMode: BlendMode.lighten,
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: CircularProgressIndicator(strokeWidth: 4),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          _loadingText.isNotEmpty ? _loadingText : '正在搜尋附近美食...',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.deepPurple.shade700,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
