@@ -117,3 +117,4 @@ app.*.map.json
 !/dev/ci/**/Gemfile.lock
 
 .env
+ios/Runner/GoogleService-Info.plist
