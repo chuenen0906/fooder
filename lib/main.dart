@@ -15,11 +15,15 @@ import 'services/restaurant_json_service.dart';
 import 'services/user_id_service.dart';
 import 'services/log_service.dart';
 import 'services/place_details_cache_service.dart';
-import 'package:flutter/rendering.dart';
+import 'services/firebase_config.dart';
+import 'photo_upload_screen.dart';
 import 'dart:ui';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+  await FirebaseConfig.initialize();
   runApp(const MyApp());
 }
 
@@ -2406,6 +2410,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              icon: const Icon(Icons.add_a_photo, color: Colors.orange, size: 32),
+                              onPressed: () {
+                                _openPhotoUploadScreen(restaurant);
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
                               icon: Icon(
                                 favorites.contains(restaurant['name'] ?? '') ? Icons.star : Icons.star_border,
                                 color: Colors.amber,
@@ -2856,6 +2867,33 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         ),
       );
     }
+  }
+
+  // 開啟照片上傳頁面
+  void _openPhotoUploadScreen(Map<String, dynamic> restaurant) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhotoUploadScreen(restaurant: restaurant),
+      ),
+    ).then((result) {
+      if (result == true) {
+        // 照片上傳成功，可以在這裡添加一些回饋
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('照片上傳成功！'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+  }
+
+  Future<bool> requestGalleryPermission() async {
+    final status = await Permission.photos.request();
+    print('Photo permission status: $status');
+    return status.isGranted || status.isLimited;
   }
 }
 
