@@ -2824,11 +2824,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   // 新增：通用圖片載入 Widget
   Widget _buildImageWidget(String imagePath, {double? width, double? height, BoxFit fit = BoxFit.cover}) {
-    print("🖼️ 載入圖片: $imagePath"); // 新增除錯輸出
     
     if (imagePath.startsWith('assets/')) {
       // 本地圖片
-      print("📁 使用本地圖片: $imagePath"); // 新增除錯輸出
       return Image.asset(
         imagePath,
         width: width,
