@@ -3,8 +3,12 @@ import os
 from google_images_search import GoogleImagesSearch
 import requests
 
-API_KEY = '***REMOVED***'
-CX = 'f374607db4ec84c9c'
+# 從環境變數讀取 API Key，避免硬編碼
+API_KEY = os.getenv('GOOGLE_API_KEY')
+CX = os.getenv('GOOGLE_CX')
+
+if not API_KEY or not CX:
+    raise ValueError("請設定環境變數 GOOGLE_API_KEY 和 GOOGLE_CX")
 
 with open('tainan_markets.json', 'r', encoding='utf-8') as f:
     data = json.load(f)
