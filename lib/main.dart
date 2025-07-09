@@ -11,14 +11,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'services/restaurant_json_service.dart';
 import 'services/user_id_service.dart';
 import 'services/log_service.dart';
 import 'services/place_details_cache_service.dart';
 import 'services/firebase_config.dart';
+import 'services/firebase_restaurant_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'photo_upload_screen.dart';
 import 'dart:ui';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -211,11 +213,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   
   // 新增：批次處理 Place Details
   void _addToBatchQueue(String placeId) {
-    // 在 JSON 模式下跳過 Place Details 請求
-    if (useJson) {
-      print("🚫 Place Details 批次請求已跳過（JSON 模式）: $placeId");
-      return;
-    }
+    // 現在總是使用 Google API
     
     if (!_batchPlaceDetailsQueue.contains(placeId)) {
       _batchPlaceDetailsQueue.add(placeId);
@@ -229,11 +227,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
   
   Future<void> _processBatchQueue() async {
-    // 在 JSON 模式下跳過 Place Details 請求
-    if (useJson) {
-      print("🚫 Place Details 請求已跳過（JSON 模式）");
-      return;
-    }
+    // 現在總是使用 Google API
     
     if (_batchPlaceDetailsQueue.isEmpty) return;
     
@@ -255,7 +249,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  bool useJson = false; // 新增：資料來源切換
+  // 已移除 JSON 模式，現在只使用 Google API + Firebase 照片
 
   // 3. 新增每日 API 請求上限
   final int _maxApiRequestsPerDay = 150;
@@ -291,11 +285,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     // 新增：載入快取統計
     _loadCacheStats();
     
-    if (useJson) {
-      loadJsonData();
-    } else {
-      fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
-    }
+    fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
     loadFavorites();
     
     // 初始化隨機標題
@@ -613,11 +603,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       if (!serviceEnabled) throw Exception('請開啟定位服務');
 
       LocationPermission permission = await Geolocator.checkPermission();
+      print('📍 當前定位權限狀態: $permission');
+      
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        print('📍 權限請求結果: $permission');
         if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          _showLocationPermissionDialog();
           throw Exception('需要定位權限才能尋找附近餐廳');
         }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        _showLocationPermissionDialog();
+        throw Exception('定位權限被永久拒絕，請到設定中手動開啟');
       }
 
       Position currentPosition;
@@ -804,6 +803,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
       print("ℹ️ Found ${newRestaurants.length} potential restaurants, ${finalList.length} remaining after strict distance filtering.");
 
+      // 🔥 新增：批量整合 Firebase 照片
+      finalList = FirebaseRestaurantService.enhanceRestaurantListWithFirebasePhotos(finalList);
+
       // Sorting logic
       finalList.sort((a, b) =>
           (double.parse(a['distance'] ?? '999999'))
@@ -961,11 +963,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   }
 
   Future<Map<String, dynamic>?> _fetchPlaceDetails(String placeId, double centerLat, double centerLng) async {
-    // 在 JSON 模式下跳過 Place Details 請求
-    if (useJson) {
-      print("🚫 Place Details API 請求已跳過（JSON 模式）: $placeId");
-      return null;
-    }
+    // 現在總是使用 Google API
     
     // 檢查 API 限制
     if (!_canMakeApiCall()) {
@@ -1063,9 +1061,20 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           'address': item['formatted_address'] ?? '',
         };
 
+        // 🔥 新增：整合 Firebase 照片
+        final enhancedRestaurant = FirebaseRestaurantService.enhanceRestaurantWithFirebasePhotos(detailsMapDynamic);
+        
+        // 如果有 Firebase 照片，也更新 image 欄位（用於單張圖片顯示）
+        if (enhancedRestaurant['has_firebase_photos'] == true) {
+          final firebasePhotos = json.decode(enhancedRestaurant['photo_urls'] ?? '[]') as List;
+          if (firebasePhotos.isNotEmpty) {
+            enhancedRestaurant['image'] = firebasePhotos.first;
+          }
+        }
+
         // 6. 存入 SQLite 快取
         try {
-          await PlaceDetailsCacheService.savePlaceDetails(placeId, json.encode(detailsMapDynamic));
+          await PlaceDetailsCacheService.savePlaceDetails(placeId, json.encode(enhancedRestaurant));
           // 更新快取統計
           await _loadCacheStats();
         } catch (e) {
@@ -1073,10 +1082,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         }
 
         // 7. 存入記憶體快取
-        _savePlaceDetailsToCache(placeId, detailsMapDynamic);
+        _savePlaceDetailsToCache(placeId, enhancedRestaurant);
 
         // 8. 回傳 Map<String, String>
-        return detailsMapDynamic;
+        return enhancedRestaurant;
       }
       return null;
     } catch (e) {
@@ -1425,17 +1434,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ),
                   );
                   break;
-                case 'toggle_json':
-                  setState(() {
-                    useJson = !useJson;
-                    isLoading = true;
-                    _loadingText = useJson ? '載入本地 JSON 資料...' : '載入 Google API 資料...';
-                  });
-                  if (useJson) {
-                    loadJsonData();
-                  } else {
-                    fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
-                  }
+                case 'clear_all_cache':
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('restaurant_cache');
+                  await prefs.remove('cache_lat');
+                  await prefs.remove('cache_lng');
+                  await prefs.remove('cache_radius');
+                  await prefs.remove('cache_timestamp');
+                  await prefs.remove(_placeDetailsCacheKey);
+                  await prefs.remove(_photoUrlCacheKey);
+                  _placeDetailsCache.clear();
+                  _photoUrlCache.clear();
+                  print("🧹 All caches cleared!");
+                  fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
                   break;
                 case 'refresh_cache_stats':
                   await _loadCacheStats();
@@ -1445,6 +1456,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                       duration: const Duration(seconds: 2),
                     ),
                   );
+                  break;
+                case 'test_permissions':
+                  await _testPermissions();
                   break;
               }
             },
@@ -1515,14 +1529,25 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ],
                   ),
                 ),
+                // 新增：測試權限
+                PopupMenuItem<String>(
+                  value: 'test_permissions',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.security, color: Colors.purple),
+                      const SizedBox(width: 8),
+                      const Text('測試權限'),
+                    ],
+                  ),
+                ),
               ],
               PopupMenuItem(
-                value: 'toggle_json',
+                value: 'clear_all_cache',
                 child: Row(
                   children: [
-                    Icon(useJson ? Icons.api : Icons.storage, color: useJson ? Colors.purple : Colors.grey),
+                    const Icon(Icons.delete_sweep, color: Colors.red),
                     const SizedBox(width: 8),
-                    Text(useJson ? '切換到 Google API' : '切換到 JSON'),
+                    const Text('清除所有快取'),
                   ],
                 ),
               ),
@@ -1727,6 +1752,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           const SizedBox(height: 2),
                           // 新增：快取統計顯示
                           _buildApiUsageRow('SQLite 快取', _cacheStats['total_entries'] ?? 0, Colors.cyan, fontSize: 10, numberFontSize: 10),
+                          // 🔥 新增：Firebase 照片統計
+                          _buildApiUsageRow('Firebase 餐廳', FirebaseRestaurantService.getPhotoStats()['total_firebase_restaurants'] ?? 0, Colors.deepOrange, fontSize: 10, numberFontSize: 10),
+                          _buildApiUsageRow('Firebase 照片', FirebaseRestaurantService.getPhotoStats()['total_firebase_photos'] ?? 0, Colors.pink, fontSize: 10, numberFontSize: 10),
                           if (_cacheStats['oldest_entry'] != null) ...[
                             Text(
                               '最舊資料: ${DateFormat('MM/dd').format(_cacheStats['oldest_entry'])}',
@@ -2731,31 +2759,134 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     return nearbySearchCost + placeDetailsCost + photoCost;
   }
 
-  Future<void> loadJsonData() async {
-    setState(() {
-      isLoading = true;
-      _loadingText = '載入本地 JSON 資料...';
-    });
+  // loadJsonData 方法已移除，現在只使用 Google API + Firebase 照片
+
+  // 測試權限狀態
+  Future<void> _testPermissions() async {
+    final cameraStatus = await Permission.camera.status;
+    final photosStatus = await Permission.photos.status;
+    final locationStatus = await Permission.locationWhenInUse.status;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('權限狀態檢查'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPermissionRow('📷 相機', cameraStatus),
+            _buildPermissionRow('📸 相簿', photosStatus),
+            _buildPermissionRow('📍 定位', locationStatus),
+            const SizedBox(height: 16),
+            const Text('如果權限被拒絕，請手動到設定中開啟'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('關閉'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text('前往設定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionRow(String name, PermissionStatus status) {
+    Color color;
+    String statusText;
     
-    try {
-      final data = await RestaurantJsonService.loadRestaurants();
-      setState(() {
-        fullRestaurantList = List<Map<String, dynamic>>.from(data);
-        currentRoundList = List.from(fullRestaurantList)..shuffle();
-        isLoading = false;
-        isSplash = false;
-        _loadingText = '已載入本地 JSON 資料';
-      });
-      
-      // 更新隨機標題
-      _updateRound1Title();
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-        isSplash = false;
-        _loadingText = '載入 JSON 資料失敗: $e';
-      });
+    switch (status) {
+      case PermissionStatus.granted:
+        color = Colors.green;
+        statusText = '已授權';
+        break;
+      case PermissionStatus.limited:
+        color = Colors.orange;
+        statusText = '限制授權';
+        break;
+      case PermissionStatus.denied:
+        color = Colors.red;
+        statusText = '被拒絕';
+        break;
+      case PermissionStatus.permanentlyDenied:
+        color = Colors.red.shade800;
+        statusText = '永久拒絕';
+        break;
+      default:
+        color = Colors.grey;
+        statusText = '未知';
     }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(name),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color),
+            ),
+            child: Text(
+              statusText,
+              style: TextStyle(color: color, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 顯示定位權限對話框
+  void _showLocationPermissionDialog() {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('需要定位權限'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('要搜尋附近餐廳，需要允許 Fooder 存取您的位置。'),
+              SizedBox(height: 16),
+              Text('請按照以下步驟操作：'),
+              SizedBox(height: 8),
+              Text('1. 點擊「前往設定」'),
+              Text('2. 找到「Fooder」應用程式'),
+              Text('3. 開啟定位權限'),
+              Text('4. 返回應用程式重新搜尋'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                openAppSettings();
+              },
+              child: const Text('前往設定'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Set<String> _fetchedPlaceIds = {};
@@ -2892,6 +3023,22 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     final status = await Permission.photos.request();
     print('Photo permission status: $status');
     return status.isGranted || status.isLimited;
+  }
+
+  Future<bool> requestPhotoPermission() async {
+    var status = await Permission.photos.request();
+    return status.isGranted;
+  }
+
+  Future<void> pickImage() async {
+    var status = await Permission.photos.request();
+    if (status.isGranted) {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      // ...後續處理
+    } else {
+      // 顯示權限不足提示
+    }
   }
 }
 

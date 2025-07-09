@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'services/firebase_service.dart';
 
 class PhotoUploadScreen extends StatefulWidget {
@@ -38,7 +39,11 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('拍照失敗: $e');
+      if (e.toString().contains('請到設定中手動開啟')) {
+        _showPermissionDialog('相機');
+      } else {
+        _showErrorSnackBar('拍照失敗: $e');
+      }
     }
   }
 
@@ -52,7 +57,11 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('選擇照片失敗: $e');
+      if (e.toString().contains('請到設定中手動開啟')) {
+        _showPermissionDialog('相簿');
+      } else {
+        _showErrorSnackBar('選擇照片失敗: $e');
+      }
     }
   }
 
@@ -148,6 +157,45 @@ class _PhotoUploadScreenState extends State<PhotoUploadScreen> {
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 2),
       ),
+    );
+  }
+
+  // 顯示權限設定對話框
+  void _showPermissionDialog(String permissionType) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('需要${permissionType}權限'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('要使用${permissionType}功能，請允許 Fooder 存取您的${permissionType}。'),
+              const SizedBox(height: 16),
+              const Text('請按照以下步驟操作：'),
+              const SizedBox(height: 8),
+              const Text('1. 點擊「前往設定」'),
+              const Text('2. 找到「Fooder」應用程式'),
+              Text('3. 開啟${permissionType}權限'),
+              const Text('4. 返回應用程式重試'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                openAppSettings();
+              },
+              child: const Text('前往設定'),
+            ),
+          ],
+        );
+      },
     );
   }
 

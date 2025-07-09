@@ -38,14 +38,56 @@ class FirebaseService {
 
   // 請求相機權限
   Future<bool> requestCameraPermission() async {
-    final status = await Permission.camera.request();
-    return status.isGranted;
+    try {
+      // 先檢查當前狀態
+      final currentStatus = await Permission.camera.status;
+      print('📷 當前相機權限狀態: $currentStatus');
+      
+      if (currentStatus.isGranted) {
+        return true;
+      }
+      
+      if (currentStatus.isPermanentlyDenied) {
+        print('⚠️ 相機權限被永久拒絕，需要手動開啟');
+        throw Exception('相機權限被拒絕，請到設定中手動開啟');
+      }
+      
+      // 請求權限
+      final status = await Permission.camera.request();
+      print('📷 權限請求結果: $status');
+      
+      return status.isGranted;
+    } catch (e) {
+      print('❌ 請求相機權限失敗: $e');
+      rethrow;
+    }
   }
 
   // 請求相簿權限
   Future<bool> requestGalleryPermission() async {
-    final status = await Permission.photos.request();
-    return status.isGranted;
+    try {
+      // 先檢查當前狀態
+      final currentStatus = await Permission.photos.status;
+      print('📸 當前相簿權限狀態: $currentStatus');
+      
+      if (currentStatus.isGranted || currentStatus.isLimited) {
+        return true;
+      }
+      
+      if (currentStatus.isPermanentlyDenied) {
+        print('⚠️ 相簿權限被永久拒絕，需要手動開啟');
+        throw Exception('相簿權限被拒絕，請到設定中手動開啟');
+      }
+      
+      // 請求權限
+      final status = await Permission.photos.request();
+      print('📸 權限請求結果: $status');
+      
+      return status.isGranted || status.isLimited;
+    } catch (e) {
+      print('❌ 請求相簿權限失敗: $e');
+      rethrow;
+    }
   }
 
   // 從相機拍照

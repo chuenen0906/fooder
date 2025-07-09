@@ -29,11 +29,13 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>需要您的位置來搜尋附近餐廳</string>
 	<key>NSCameraUsageDescription</key>
-	<string>需要相機權限來拍攝餐廳照片</string>
+	<string>需要相機權限來拍攝餐廳照片並上傳分享</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>需要相簿權限來選擇餐廳照片</string>
+	<string>需要存取相簿來選擇餐廳照片並上傳分享</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>需要相簿寫入權限來儲存餐廳照片</string>
+	<string>需要寫入相簿權限才能儲存拍攝的餐廳照片</string>
+	<key>PHPhotoLibraryUsageDescription</key>
+	<string>需要存取相簿來選擇餐廳照片並上傳分享</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
