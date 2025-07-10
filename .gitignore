@@ -5,9 +5,11 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -46,9 +48,34 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# 建置檔案和產生檔案
+**/build/
+**/.dart_tool/
+**/.flutter-plugins-dependencies
+**/ios/Podfile.lock
+**/macos/Podfile.lock
+**/generated_plugin_registrant.*
+**/generated_plugins.cmake
+**/.last_build_id
+**/ephemeral/
+**/XCBuildData/
+**/archive/
+**/ipa/
+**/dSYMs/
+
 # Firebase 敏感檔案
 *firebase-adminsdk*.json
 .env
+.env.backup
+credentials.json
+google_form_config.json
+
+# Firebase 配置檔案（包含 API 金鑰）
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Google API 金鑰管理腳本
+manage_api_keys.py
 
 # Python 相關
 __pycache__/
