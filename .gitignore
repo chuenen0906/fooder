@@ -92,4 +92,12 @@ upload_storage_only.py
 integrate_photos.py
 
 # macOS
-.DS_Store
+.DS_Store# 敏感檔案 - 不要提交到 Git
+credentials.json
+folder-47165-firebase-adminsdk-fbsvc-*.json
+.env
+.env.*
+*.key
+*.pem
+config.json
+google-services.json
