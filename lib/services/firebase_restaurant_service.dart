@@ -6,7 +6,7 @@ class FirebaseRestaurantService {
   factory FirebaseRestaurantService() => _instance;
   FirebaseRestaurantService._internal();
 
-  // Firebase 上傳的餐廳照片映射 - 自動生成於 2025-07-09
+  // Firebase 上傳的餐廳照片映射 - 自動生成於 2025-07-10
   static const Map<String, List<String>> _restaurantPhotoUrls = {
     "金得春捲": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2.jpg"
@@ -337,6 +337,246 @@ class FirebaseRestaurantService {
     ],
     "牛肉丼飯": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%89%9B%E8%82%89%E4%B8%BC%E9%A3%AF/%E7%89%9B%E8%82%89%E4%B8%BC%E9%A3%AF.jpg"
+    ],
+    "生魚片丼": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%94%9F%E9%AD%9A%E7%89%87%E4%B8%BC/%E7%94%9F%E9%AD%9A%E7%89%87%E4%B8%BC.jpg"
+    ],
+    "度小月擔仔麵": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%BA%A6%E5%B0%8F%E6%9C%88%E6%93%94%E4%BB%94%E9%BA%B5/%E5%BA%A6%E5%B0%8F%E6%9C%88%E6%93%94%E4%BB%94%E9%BA%B5.jpg"
+    ],
+    "博仁堂藥膳湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8D%9A%E4%BB%81%E5%A0%82%E8%97%A5%E8%86%B3%E6%B9%AF/%E5%8D%9A%E4%BB%81%E5%A0%82%E8%97%A5%E8%86%B3%E6%B9%AF.jpg"
+    ],
+    "八筒甜室": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%85%AB%E7%AD%92%E7%94%9C%E5%AE%A4/%E5%85%AB%E7%AD%92%E7%94%9C%E5%AE%A4.jpg"
+    ],
+    "韓金婆婆豆腐酪": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%9F%93%E9%87%91%E5%A9%86%E5%A9%86%E8%B1%86%E8%85%90%E9%85%AA/%E9%9F%93%E9%87%91%E5%A9%86%E5%A9%86%E8%B1%86%E8%85%90%E9%85%AA.jpg"
+    ],
+    "永樂燒肉飯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B0%B8%E6%A8%82%E7%87%92%E8%82%89%E9%A3%AF/%E6%B0%B8%E6%A8%82%E7%87%92%E8%82%89%E9%A3%AF.jpg"
+    ],
+    "華味香（新營鴨肉羹）": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%8F%AF%E5%91%B3%E9%A6%99%EF%BC%88%E6%96%B0%E7%87%9F%E9%B4%A8%E8%82%89%E7%BE%B9%EF%BC%89/%E8%8F%AF%E5%91%B3%E9%A6%99%EF%BC%88%E6%96%B0%E7%87%9F%E9%B4%A8%E8%82%89%E7%BE%B9%EF%BC%89.jpg"
+    ],
+    "小哲食堂": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B0%8F%E5%93%B2%E9%A3%9F%E5%A0%82/%E5%B0%8F%E5%93%B2%E9%A3%9F%E5%A0%82.jpg"
+    ],
+    "Here Kyoto": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Here%20Kyoto/Here%20Kyoto.jpg"
+    ],
+    "L'Amour鐵板燒": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/L%27Amour%E9%90%B5%E6%9D%BF%E7%87%92/L%27Amour%E9%90%B5%E6%9D%BF%E7%87%92.jpg"
+    ],
+    "AMA LABO": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/AMA%20LABO/AMA%20LABO.jpg"
+    ],
+    "Bonheur Cookie": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Bonheur%20Cookie/Bonheur%20Cookie.jpg"
+    ],
+    "樂慕鐵板燒": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%A8%82%E6%85%95%E9%90%B5%E6%9D%BF%E7%87%92/%E6%A8%82%E6%85%95%E9%90%B5%E6%9D%BF%E7%87%92.jpg"
+    ],
+    "一番地壽喜燒": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%80%E7%95%AA%E5%9C%B0%E5%A3%BD%E5%96%9C%E7%87%92/%E4%B8%80%E7%95%AA%E5%9C%B0%E5%A3%BD%E5%96%9C%E7%87%92.jpg"
+    ],
+    "遠東Cafe": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%81%A0%E6%9D%B1Cafe/%E9%81%A0%E6%9D%B1Cafe.jpg"
+    ],
+    "莘全素料理": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%8E%98%E5%85%A8%E7%B4%A0%E6%96%99%E7%90%86/%E8%8E%98%E5%85%A8%E7%B4%A0%E6%96%99%E7%90%86.jpg"
+    ],
+    "漢來海港餐廳": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%BC%A2%E4%BE%86%E6%B5%B7%E6%B8%AF%E9%A4%90%E5%BB%B3/%E6%BC%A2%E4%BE%86%E6%B5%B7%E6%B8%AF%E9%A4%90%E5%BB%B3.jpg"
+    ],
+    "潘家牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%BD%98%E5%AE%B6%E7%89%9B%E8%82%89%E6%B9%AF/%E6%BD%98%E5%AE%B6%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+    ],
+    "阿村第二代牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%9D%91%E7%AC%AC%E4%BA%8C%E4%BB%A3%E7%89%9B%E8%82%89%E6%B9%AF/%E9%98%BF%E6%9D%91%E7%AC%AC%E4%BA%8C%E4%BB%A3%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+    ],
+    "無名羊肉湯（大菜市）": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%84%A1%E5%90%8D%E7%BE%8A%E8%82%89%E6%B9%AF%EF%BC%88%E5%A4%A7%E8%8F%9C%E5%B8%82%EF%BC%89/%E7%84%A1%E5%90%8D%E7%BE%8A%E8%82%89%E6%B9%AF%EF%BC%88%E5%A4%A7%E8%8F%9C%E5%B8%82%EF%BC%89.jpg"
+    ],
+    "六千牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%85%AD%E5%8D%83%E7%89%9B%E8%82%89%E6%B9%AF/%E5%85%AD%E5%8D%83%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+    ],
+    "VTCC烤雞": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/VTCC%E7%83%A4%E9%9B%9E/VTCC%E7%83%A4%E9%9B%9E.jpg"
+    ],
+    "清水堂": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B8%85%E6%B0%B4%E5%A0%82/%E6%B8%85%E6%B0%B4%E5%A0%82.jpg"
+    ],
+    "葉家小卷米粉": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%91%89%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E8%91%89%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89.jpg"
+    ],
+    "阿卿杏仁茶": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%8D%BF%E6%9D%8F%E4%BB%81%E8%8C%B6/%E9%98%BF%E5%8D%BF%E6%9D%8F%E4%BB%81%E8%8C%B6.jpg"
+    ],
+    "福生小食": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%A6%8F%E7%94%9F%E5%B0%8F%E9%A3%9F/%E7%A6%8F%E7%94%9F%E5%B0%8F%E9%A3%9F.jpg"
+    ],
+    "協進國小2元黑輪攤": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8D%94%E9%80%B2%E5%9C%8B%E5%B0%8F2%E5%85%83%E9%BB%91%E8%BC%AA%E6%94%A4/%E5%8D%94%E9%80%B2%E5%9C%8B%E5%B0%8F2%E5%85%83%E9%BB%91%E8%BC%AA%E6%94%A4.jpg"
+    ],
+    "韋家乾麵": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%9F%8B%E5%AE%B6%E4%B9%BE%E9%BA%B5/%E9%9F%8B%E5%AE%B6%E4%B9%BE%E9%BA%B5.jpg"
+    ],
+    "小赤佬干鍋": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B0%8F%E8%B5%A4%E4%BD%AC%E5%B9%B2%E9%8D%8B/%E5%B0%8F%E8%B5%A4%E4%BD%AC%E5%B9%B2%E9%8D%8B.jpg"
+    ],
+    "感性滷味": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%84%9F%E6%80%A7%E6%BB%B7%E5%91%B3/%E6%84%9F%E6%80%A7%E6%BB%B7%E5%91%B3.jpg"
+    ],
+    "阿杰溫體牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%9D%B0%E6%BA%AB%E9%AB%94%E7%89%9B%E8%82%89%E6%B9%AF/%E9%98%BF%E6%9D%B0%E6%BA%AB%E9%AB%94%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+    ],
+    "豪牛溫體牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%B1%AA%E7%89%9B%E6%BA%AB%E9%AB%94%E7%89%9B%E8%82%89%E6%B9%AF/%E8%B1%AA%E7%89%9B%E6%BA%AB%E9%AB%94%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+    ],
+    "Chun純薏仁": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Chun%E7%B4%94%E8%96%8F%E4%BB%81/Chun%E7%B4%94%E8%96%8F%E4%BB%81.jpg"
+    ],
+    "民德虱目魚粥": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B0%91%E5%BE%B7%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%B2%A5/%E6%B0%91%E5%BE%B7%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%B2%A5.jpg"
+    ],
+    "双生綠豆沙牛奶": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8F%8C%E7%94%9F%E7%B6%A0%E8%B1%86%E6%B2%99%E7%89%9B%E5%A5%B6/%E5%8F%8C%E7%94%9F%E7%B6%A0%E8%B1%86%E6%B2%99%E7%89%9B%E5%A5%B6.jpg"
+    ],
+    "鼎富發豬油拌飯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%BC%8E%E5%AF%8C%E7%99%BC%E8%B1%AC%E6%B2%B9%E6%8B%8C%E9%A3%AF/%E9%BC%8E%E5%AF%8C%E7%99%BC%E8%B1%AC%E6%B2%B9%E6%8B%8C%E9%A3%AF.jpg"
+    ],
+    "國華街豆腐洋行": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9C%8B%E8%8F%AF%E8%A1%97%E8%B1%86%E8%85%90%E6%B4%8B%E8%A1%8C/%E5%9C%8B%E8%8F%AF%E8%A1%97%E8%B1%86%E8%85%90%E6%B4%8B%E8%A1%8C.jpg"
+    ],
+    "鹽水意麵": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B9%BD%E6%B0%B4%E6%84%8F%E9%BA%B5/%E9%B9%BD%E6%B0%B4%E6%84%8F%E9%BA%B5.jpg"
+    ],
+    "東山咖啡": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%9D%B1%E5%B1%B1%E5%92%96%E5%95%A1/%E6%9D%B1%E5%B1%B1%E5%92%96%E5%95%A1.jpg"
+    ],
+    "鬍鬚忠牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%AC%8D%E9%AC%9A%E5%BF%A0%E7%89%9B%E8%82%89%E6%B9%AF/%E9%AC%8D%E9%AC%9A%E5%BF%A0%E7%89%9B%E8%82%89%E6%B9%AF.png"
+    ],
+    "再發號百年肉粽": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%86%8D%E7%99%BC%E8%99%9F%E7%99%BE%E5%B9%B4%E8%82%89%E7%B2%BD/%E5%86%8D%E7%99%BC%E8%99%9F%E7%99%BE%E5%B9%B4%E8%82%89%E7%B2%BD.jpg"
+    ],
+    "上好烤魯味": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%8A%E5%A5%BD%E7%83%A4%E9%AD%AF%E5%91%B3/%E4%B8%8A%E5%A5%BD%E7%83%A4%E9%AD%AF%E5%91%B3.jpg"
+    ],
+    "百年油條": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%99%BE%E5%B9%B4%E6%B2%B9%E6%A2%9D/%E7%99%BE%E5%B9%B4%E6%B2%B9%E6%A2%9D.jpg"
+    ],
+    "四季溫體牛肉鍋": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9B%9B%E5%AD%A3%E6%BA%AB%E9%AB%94%E7%89%9B%E8%82%89%E9%8D%8B/%E5%9B%9B%E5%AD%A3%E6%BA%AB%E9%AB%94%E7%89%9B%E8%82%89%E9%8D%8B.jpg"
+    ],
+    "麵條王海產麵": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%BA%B5%E6%A2%9D%E7%8E%8B%E6%B5%B7%E7%94%A2%E9%BA%B5/%E9%BA%B5%E6%A2%9D%E7%8E%8B%E6%B5%B7%E7%94%A2%E9%BA%B5.jpg"
+    ],
+    "下大道旗魚羹": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%8B%E5%A4%A7%E9%81%93%E6%97%97%E9%AD%9A%E7%BE%B9/%E4%B8%8B%E5%A4%A7%E9%81%93%E6%97%97%E9%AD%9A%E7%BE%B9.jpg"
+    ],
+    "上海味香小吃店": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%8A%E6%B5%B7%E5%91%B3%E9%A6%99%E5%B0%8F%E5%90%83%E5%BA%97/%E4%B8%8A%E6%B5%B7%E5%91%B3%E9%A6%99%E5%B0%8F%E5%90%83%E5%BA%97.jpg"
+    ],
+    "清珍鴨肉羹": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B8%85%E7%8F%8D%E9%B4%A8%E8%82%89%E7%BE%B9/%E6%B8%85%E7%8F%8D%E9%B4%A8%E8%82%89%E7%BE%B9.jpg"
+    ],
+    "AIC 冰淇淋": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/AIC%20%E5%86%B0%E6%B7%87%E6%B7%8B/AIC%20%E5%86%B0%E6%B7%87%E6%B7%8B.jpg"
+    ],
+    "小兵砂鍋菜": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B0%8F%E5%85%B5%E7%A0%82%E9%8D%8B%E8%8F%9C/%E5%B0%8F%E5%85%B5%E7%A0%82%E9%8D%8B%E8%8F%9C.png"
+    ],
+    "Oganna黑瓶子燒肉": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Oganna%E9%BB%91%E7%93%B6%E5%AD%90%E7%87%92%E8%82%89/Oganna%E9%BB%91%E7%93%B6%E5%AD%90%E7%87%92%E8%82%89.jpg"
+    ],
+    "隼次燒鳥居食處": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%9A%BC%E6%AC%A1%E7%87%92%E9%B3%A5%E5%B1%85%E9%A3%9F%E8%99%95/%E9%9A%BC%E6%AC%A1%E7%87%92%E9%B3%A5%E5%B1%85%E9%A3%9F%E8%99%95.jpg"
+    ],
+    "布拉格烘焙": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B8%83%E6%8B%89%E6%A0%BC%E7%83%98%E7%84%99/%E5%B8%83%E6%8B%89%E6%A0%BC%E7%83%98%E7%84%99.jpg"
+    ],
+    "BKSK鬆餅": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/BKSK%E9%AC%86%E9%A4%85/BKSK%E9%AC%86%E9%A4%85.jpg"
+    ],
+    "植形力": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%A4%8D%E5%BD%A2%E5%8A%9B/%E6%A4%8D%E5%BD%A2%E5%8A%9B.jpg"
+    ],
+    "小卒砂鍋雞米飯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B0%8F%E5%8D%92%E7%A0%82%E9%8D%8B%E9%9B%9E%E7%B1%B3%E9%A3%AF/%E5%B0%8F%E5%8D%92%E7%A0%82%E9%8D%8B%E9%9B%9E%E7%B1%B3%E9%A3%AF.jpg"
+    ],
+    "阿澎海產粥": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%BE%8E%E6%B5%B7%E7%94%A2%E7%B2%A5/%E9%98%BF%E6%BE%8E%E6%B5%B7%E7%94%A2%E7%B2%A5.jpg"
+    ],
+    "包工坊": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8C%85%E5%B7%A5%E5%9D%8A/%E5%8C%85%E5%B7%A5%E5%9D%8A.jpg"
+    ],
+    "叔炸甜不辣媽": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8F%94%E7%82%B8%E7%94%9C%E4%B8%8D%E8%BE%A3%E5%AA%BD/%E5%8F%94%E7%82%B8%E7%94%9C%E4%B8%8D%E8%BE%A3%E5%AA%BD.jpg"
+    ],
+    "日便當": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%97%A5%E4%BE%BF%E7%95%B6/%E6%97%A5%E4%BE%BF%E7%95%B6.png"
+    ],
+    "綠豆皮": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%B6%A0%E8%B1%86%E7%9A%AE/%E7%B6%A0%E8%B1%86%E7%9A%AE.jpg"
+    ],
+    "沙白電台": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B2%99%E7%99%BD%E9%9B%BB%E5%8F%B0/%E6%B2%99%E7%99%BD%E9%9B%BB%E5%8F%B0.jpg"
+    ],
+    "一坪壽司小賣所": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%80%E5%9D%AA%E5%A3%BD%E5%8F%B8%E5%B0%8F%E8%B3%A3%E6%89%80/%E4%B8%80%E5%9D%AA%E5%A3%BD%E5%8F%B8%E5%B0%8F%E8%B3%A3%E6%89%80.jpg"
+    ],
+    "李記血藤爐": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%9D%8E%E8%A8%98%E8%A1%80%E8%97%A4%E7%88%90/%E6%9D%8E%E8%A8%98%E8%A1%80%E8%97%A4%E7%88%90.jpg"
+    ],
+    "泰式幽靈串燒": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B3%B0%E5%BC%8F%E5%B9%BD%E9%9D%88%E4%B8%B2%E7%87%92/%E6%B3%B0%E5%BC%8F%E5%B9%BD%E9%9D%88%E4%B8%B2%E7%87%92.jpg"
+    ],
+    "國華街肉燥飯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9C%8B%E8%8F%AF%E8%A1%97%E8%82%89%E7%87%A5%E9%A3%AF/%E5%9C%8B%E8%8F%AF%E8%A1%97%E8%82%89%E7%87%A5%E9%A3%AF.jpg"
+    ],
+    "Little b 小波露": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Little%20b%20%E5%B0%8F%E6%B3%A2%E9%9C%B2/Little%20b%20%E5%B0%8F%E6%B3%A2%E9%9C%B2.jpg"
+    ],
+    "初幸居食屋": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%88%9D%E5%B9%B8%E5%B1%85%E9%A3%9F%E5%B1%8B/%E5%88%9D%E5%B9%B8%E5%B1%85%E9%A3%9F%E5%B1%8B.jpg"
+    ],
+    "品馨冰菓室": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%93%81%E9%A6%A8%E5%86%B0%E8%8F%93%E5%AE%A4/%E5%93%81%E9%A6%A8%E5%86%B0%E8%8F%93%E5%AE%A4.png"
+    ],
+    "樂浮茶飲": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%A8%82%E6%B5%AE%E8%8C%B6%E9%A3%B2/%E6%A8%82%E6%B5%AE%E8%8C%B6%E9%A3%B2.jpg"
+    ],
+    "熊記Bear's Casa": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%86%8A%E8%A8%98Bear%27s%20Casa/%E7%86%8A%E8%A8%98Bear%27s%20Casa.jpg"
+    ],
+    "咕嚕叫土司": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%92%95%E5%9A%95%E5%8F%AB%E5%9C%9F%E5%8F%B8/%E5%92%95%E5%9A%95%E5%8F%AB%E5%9C%9F%E5%8F%B8.jpg"
+    ],
+    "林紅茶": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%9E%97%E7%B4%85%E8%8C%B6/%E6%9E%97%E7%B4%85%E8%8C%B6.jpg"
+    ],
+    "富鴻魚肚小吃": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%AF%8C%E9%B4%BB%E9%AD%9A%E8%82%9A%E5%B0%8F%E5%90%83/%E5%AF%8C%E9%B4%BB%E9%AD%9A%E8%82%9A%E5%B0%8F%E5%90%83.jpg"
+    ],
+    "三鮮蒸餃": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%89%E9%AE%AE%E8%92%B8%E9%A4%83/%E4%B8%89%E9%AE%AE%E8%92%B8%E9%A4%83.jpg"
+    ],
+    "碳饅堡": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%A2%B3%E9%A5%85%E5%A0%A1/%E7%A2%B3%E9%A5%85%E5%A0%A1.jpg"
+    ],
+    "阿忠魚粥": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%BF%A0%E9%AD%9A%E7%B2%A5/%E9%98%BF%E5%BF%A0%E9%AD%9A%E7%B2%A5.jpg"
+    ],
+    "捲捲米Sushi Bar": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%8D%B2%E6%8D%B2%E7%B1%B3Sushi%20Bar/%E6%8D%B2%E6%8D%B2%E7%B1%B3Sushi%20Bar.jpg"
+    ],
+    "和喫鬆餅": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%92%8C%E5%96%AB%E9%AC%86%E9%A4%85/%E5%92%8C%E5%96%AB%E9%AC%86%E9%A4%85.jpg"
+    ],
+    "玉婆壽司屋": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%8E%89%E5%A9%86%E5%A3%BD%E5%8F%B8%E5%B1%8B/%E7%8E%89%E5%A9%86%E5%A3%BD%E5%8F%B8%E5%B1%8B.jpg"
     ]
   };
 
