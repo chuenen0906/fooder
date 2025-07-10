@@ -1,0 +1,342 @@
+[
+  {
+    "name": "竹滬麵店",
+    "specialty": "家鄉乾濕麵",
+    "area": "中西區",
+    "description": "60年老攤車起家，文青風格麵店",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%AB%B9%E6%BB%AC%E9%BA%B5%E5%BA%97/%E7%AB%B9%E6%BB%AC%E9%BA%B5%E5%BA%97.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:26.247294"
+  },
+  {
+    "name": "中山公園黑輪攤",
+    "specialty": "黑輪",
+    "area": "中西區",
+    "description": "圖書館旁下午茶攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%AD%E5%B1%B1%E5%85%AC%E5%9C%92%E9%BB%91%E8%BC%AA%E6%94%A4/%E4%B8%AD%E5%B1%B1%E5%85%AC%E5%9C%92%E9%BB%91%E8%BC%AA%E6%94%A4.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:29.623756"
+  },
+  {
+    "name": "明月麵店",
+    "specialty": "乾麵",
+    "area": "中西區",
+    "description": "70年老店，巷弄人氣麵攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%98%8E%E6%9C%88%E9%BA%B5%E5%BA%97/%E6%98%8E%E6%9C%88%E9%BA%B5%E5%BA%97.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:32.688521"
+  },
+  {
+    "name": "幽靈炒飯",
+    "specialty": "炒飯",
+    "area": "中西區",
+    "description": "深夜限量排隊出攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B9%BD%E9%9D%88%E7%82%92%E9%A3%AF/%E5%B9%BD%E9%9D%88%E7%82%92%E9%A3%AF.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:35.918278"
+  },
+  {
+    "name": "郭記爌肉米糕",
+    "specialty": "爌肉米糕",
+    "area": "中西區",
+    "description": "銅板價、大份量飽足宵夜",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%83%AD%E8%A8%98%E7%88%8C%E8%82%89%E7%B1%B3%E7%B3%95/%E9%83%AD%E8%A8%98%E7%88%8C%E8%82%89%E7%B1%B3%E7%B3%95.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:38.850439"
+  },
+  {
+    "name": "護境松王無名麵攤",
+    "specialty": "宵夜乾麵",
+    "area": "中西區",
+    "description": "巷內隱藏宵夜麵攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%AD%B7%E5%A2%83%E6%9D%BE%E7%8E%8B%E7%84%A1%E5%90%8D%E9%BA%B5%E6%94%A4/%E8%AD%B7%E5%A2%83%E6%9D%BE%E7%8E%8B%E7%84%A1%E5%90%8D%E9%BA%B5%E6%94%A4.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:41.916138"
+  },
+  {
+    "name": "阿雪黑輪米血湯",
+    "specialty": "黑輪米血",
+    "area": "中西區",
+    "description": "快速道路底下運將愛攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E9%9B%AA%E9%BB%91%E8%BC%AA%E7%B1%B3%E8%A1%80%E6%B9%AF/%E9%98%BF%E9%9B%AA%E9%BB%91%E8%BC%AA%E7%B1%B3%E8%A1%80%E6%B9%AF.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:45.175324"
+  },
+  {
+    "name": "阿公阿婆蛋餅",
+    "specialty": "手作蛋餅",
+    "area": "中西區",
+    "description": "大份量銅板價早餐",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%85%AC%E9%98%BF%E5%A9%86%E8%9B%8B%E9%A4%85/%E9%98%BF%E5%85%AC%E9%98%BF%E5%A9%86%E8%9B%8B%E9%A4%85.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:48.091476"
+  },
+  {
+    "name": "中山路無名米糕",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "肉燥＋滷腸，銅板價美味",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%AD%E5%B1%B1%E8%B7%AF%E7%84%A1%E5%90%8D%E7%B1%B3%E7%B3%95/%E4%B8%AD%E5%B1%B1%E8%B7%AF%E7%84%A1%E5%90%8D%E7%B1%B3%E7%B3%95.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:51.044610"
+  },
+  {
+    "name": "鴨母寮市場無名剉冰",
+    "specialty": "剉冰",
+    "area": "中西區",
+    "description": "任選4料只要30元",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%A8%E6%AF%8D%E5%AF%AE%E5%B8%82%E5%A0%B4%E7%84%A1%E5%90%8D%E5%89%89%E5%86%B0/%E9%B4%A8%E6%AF%8D%E5%AF%AE%E5%B8%82%E5%A0%B4%E7%84%A1%E5%90%8D%E5%89%89%E5%86%B0.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:53.904437"
+  },
+  {
+    "name": "明月乾麵",
+    "specialty": "乾麵",
+    "area": "中西區",
+    "description": "70年老乾麵，口碑好",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%98%8E%E6%9C%88%E4%B9%BE%E9%BA%B5/%E6%98%8E%E6%9C%88%E4%B9%BE%E9%BA%B5.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:57.156578"
+  },
+  {
+    "name": "葉麥克炸雞",
+    "specialty": "炸雞",
+    "area": "中西區",
+    "description": "下午小吃排隊攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%91%89%E9%BA%A5%E5%85%8B%E7%82%B8%E9%9B%9E/%E8%91%89%E9%BA%A5%E5%85%8B%E7%82%B8%E9%9B%9E.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:43:59.496945"
+  },
+  {
+    "name": "糯夫米糕",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "麻油香、古早味",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%B3%AF%E5%A4%AB%E7%B1%B3%E7%B3%95/%E7%B3%AF%E5%A4%AB%E7%B1%B3%E7%B3%95.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:01.459824"
+  },
+  {
+    "name": "祿記包子水晶餃",
+    "specialty": "包子／水晶餃",
+    "area": "中西區",
+    "description": "皮薄Q餡汁鮮美",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%A5%BF%E8%A8%98%E5%8C%85%E5%AD%90%E6%B0%B4%E6%99%B6%E9%A4%83/%E7%A5%BF%E8%A8%98%E5%8C%85%E5%AD%90%E6%B0%B4%E6%99%B6%E9%A4%83.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:02.997107"
+  },
+  {
+    "name": "921地瓜球",
+    "specialty": "地瓜球",
+    "area": "中西區",
+    "description": "外脆內Q，地瓜香濃",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/921%E5%9C%B0%E7%93%9C%E7%90%83/921%E5%9C%B0%E7%93%9C%E7%90%83.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:04.836282"
+  },
+  {
+    "name": "蛋餅小二",
+    "specialty": "起司蛋餅",
+    "area": "中西區",
+    "description": "雙色起司，C/P值高",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%9B%8B%E9%A4%85%E5%B0%8F%E4%BA%8C/%E8%9B%8B%E9%A4%85%E5%B0%8F%E4%BA%8C.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:06.558114"
+  },
+  {
+    "name": "水仙宮古早味早餐",
+    "specialty": "飯糰",
+    "area": "中西區",
+    "description": "人氣阿婆飯糰攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B0%B4%E4%BB%99%E5%AE%AE%E5%8F%A4%E6%97%A9%E5%91%B3%E6%97%A9%E9%A4%90/%E6%B0%B4%E4%BB%99%E5%AE%AE%E5%8F%A4%E6%97%A9%E5%91%B3%E6%97%A9%E9%A4%90.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:08.522582"
+  },
+  {
+    "name": "紅記早點",
+    "specialty": "蛋餅",
+    "area": "中西區",
+    "description": "起司控推薦起司蛋餅",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%B4%85%E8%A8%98%E6%97%A9%E9%BB%9E/%E7%B4%85%E8%A8%98%E6%97%A9%E9%BB%9E.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:10.366035"
+  },
+  {
+    "name": "吐司吐司早餐",
+    "specialty": "蛋餅",
+    "area": "中西區",
+    "description": "薯泥起司大份量",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%90%90%E5%8F%B8%E5%90%90%E5%8F%B8%E6%97%A9%E9%A4%90/%E5%90%90%E5%8F%B8%E5%90%90%E5%8F%B8%E6%97%A9%E9%A4%90.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:12.099600"
+  },
+  {
+    "name": "少爺手作蛋餅",
+    "specialty": "蛋餅",
+    "area": "中西區",
+    "description": "流沙／薯泥口味",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B0%91%E7%88%BA%E6%89%8B%E4%BD%9C%E8%9B%8B%E9%A4%85/%E5%B0%91%E7%88%BA%E6%89%8B%E4%BD%9C%E8%9B%8B%E9%A4%85.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:13.949813"
+  },
+  {
+    "name": "千香漢堡",
+    "specialty": "麥蛋堡",
+    "area": "中西區",
+    "description": "中央廚房柔軟吐司",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8D%83%E9%A6%99%E6%BC%A2%E5%A0%A1/%E5%8D%83%E9%A6%99%E6%BC%A2%E5%A0%A1.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:16.203160"
+  },
+  {
+    "name": "鼎勝發包子",
+    "specialty": "包子",
+    "area": "中西區",
+    "description": "爆漿包子、巧克力餡",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%BC%8E%E5%8B%9D%E7%99%BC%E5%8C%85%E5%AD%90/%E9%BC%8E%E5%8B%9D%E7%99%BC%E5%8C%85%E5%AD%90.jpeg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:17.867761"
+  },
+  {
+    "name": "三元坊泡芙",
+    "specialty": "泡芙",
+    "area": "中西區",
+    "description": "平價爆餡銅板美食",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%89%E5%85%83%E5%9D%8A%E6%B3%A1%E8%8A%99/%E4%B8%89%E5%85%83%E5%9D%8A%E6%B3%A1%E8%8A%99.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:19.581493"
+  },
+  {
+    "name": "央米紅豆餅",
+    "specialty": "紅豆餅",
+    "area": "中西區",
+    "description": "珍珠＋奶油內餡",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%A4%AE%E7%B1%B3%E7%B4%85%E8%B1%86%E9%A4%85/%E5%A4%AE%E7%B1%B3%E7%B4%85%E8%B1%86%E9%A4%85.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:21.385575"
+  },
+  {
+    "name": "文賢路雞蛋糕",
+    "specialty": "雞蛋糕",
+    "area": "中西區",
+    "description": "老牌雞蛋糕攤",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%96%87%E8%B3%A2%E8%B7%AF%E9%9B%9E%E8%9B%8B%E7%B3%95/%E6%96%87%E8%B3%A2%E8%B7%AF%E9%9B%9E%E8%9B%8B%E7%B3%95.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:23.787194"
+  },
+  {
+    "name": "王氏富屋金蕉條",
+    "specialty": "香蕉條雞蛋糕",
+    "area": "中西區",
+    "description": "可牽絲人氣小吃",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%8E%8B%E6%B0%8F%E5%AF%8C%E5%B1%8B%E9%87%91%E8%95%89%E6%A2%9D/%E7%8E%8B%E6%B0%8F%E5%AF%8C%E5%B1%8B%E9%87%91%E8%95%89%E6%A2%9D.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:25.133955"
+  },
+  {
+    "name": "小豫竹炭雞蛋糕",
+    "specialty": "竹炭雞蛋糕",
+    "area": "中西區",
+    "description": "貓掌造型、有機食材",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%B0%8F%E8%B1%AB%E7%AB%B9%E7%82%AD%E9%9B%9E%E8%9B%8B%E7%B3%95/%E5%B0%8F%E8%B1%AB%E7%AB%B9%E7%82%AD%E9%9B%9E%E8%9B%8B%E7%B3%95.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:26.992570"
+  },
+  {
+    "name": "陳家大腸包香腸",
+    "specialty": "大腸包香腸",
+    "area": "中西區",
+    "description": "手工米腸＋香腸",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%99%B3%E5%AE%B6%E5%A4%A7%E8%85%B8%E5%8C%85%E9%A6%99%E8%85%B8/%E9%99%B3%E5%AE%B6%E5%A4%A7%E8%85%B8%E5%8C%85%E9%A6%99%E8%85%B8.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:28.835764"
+  },
+  {
+    "name": "T&F 手作吐司",
+    "specialty": "熱壓吐司",
+    "area": "中西區",
+    "description": "凌晨也有營業",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/T%26F%20%E6%89%8B%E4%BD%9C%E5%90%90%E5%8F%B8/T%26F%20%E6%89%8B%E4%BD%9C%E5%90%90%E5%8F%B8.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:30.629629"
+  },
+  {
+    "name": "陳媽媽涼麵",
+    "specialty": "涼麵",
+    "area": "中西區",
+    "description": "蒜香麻醬開胃",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%99%B3%E5%AA%BD%E5%AA%BD%E6%B6%BC%E9%BA%B5/%E9%99%B3%E5%AA%BD%E5%AA%BD%E6%B6%BC%E9%BA%B5.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:32.116238"
+  },
+  {
+    "name": "水星杏仁豆腐冰",
+    "specialty": "杏仁豆腐冰",
+    "area": "中西區",
+    "description": "Q彈涼爽甜品",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B0%B4%E6%98%9F%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0/%E6%B0%B4%E6%98%9F%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:33.429800"
+  },
+  {
+    "name": "石家阿美綠豆湯",
+    "specialty": "綠豆湯",
+    "area": "中西區",
+    "description": "料多碗大銅板價",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%9F%B3%E5%AE%B6%E9%98%BF%E7%BE%8E%E7%B6%A0%E8%B1%86%E6%B9%AF/%E7%9F%B3%E5%AE%B6%E9%98%BF%E7%BE%8E%E7%B6%A0%E8%B1%86%E6%B9%AF.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:34.943018"
+  },
+  {
+    "name": "開山順天冰棒",
+    "specialty": "冰棒",
+    "area": "中西區",
+    "description": "甲子老店古早味",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%96%8B%E5%B1%B1%E9%A0%86%E5%A4%A9%E5%86%B0%E6%A3%92/%E9%96%8B%E5%B1%B1%E9%A0%86%E5%A4%A9%E5%86%B0%E6%A3%92.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:36.745587"
+  },
+  {
+    "name": "萬伯鹹粥",
+    "specialty": "鹹粥",
+    "area": "中西區",
+    "description": "北區老店鹹粥好味",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%90%AC%E4%BC%AF%E9%B9%B9%E7%B2%A5/%E8%90%AC%E4%BC%AF%E9%B9%B9%E7%B2%A5.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:44:38.564851"
+  }
+]

@@ -1138,5 +1138,341 @@
     "specialty": "壽司",
     "area": "中西區",
     "description": "平價壽司小店"
+  },
+  {
+    "name": "AIC冰淇淋",
+    "specialty": "冰淇淋",
+    "area": "中西區",
+    "description": "手工創意多口味"
+  },
+  {
+    "name": "葉家豬血湯",
+    "specialty": "豬血湯",
+    "area": "中西區",
+    "description": "人氣豬血湯攤"
+  },
+  {
+    "name": "葉家生炒魷魚",
+    "specialty": "生炒魷魚",
+    "area": "中西區",
+    "description": "現炒魷魚，香辣可口"
+  },
+  {
+    "name": "古早味花生冰",
+    "specialty": "花生冰",
+    "area": "中西區",
+    "description": "古法花生冰淇淋"
+  },
+  {
+    "name": "阿嬤現做麻糬",
+    "specialty": "麻糬",
+    "area": "中西區",
+    "description": "現做Q彈麻糬"
+  },
+  {
+    "name": "老街紅燒肉",
+    "specialty": "紅燒肉",
+    "area": "中西區",
+    "description": "傳統紅燒肉小店"
+  },
+  {
+    "name": "甄品豬腳",
+    "specialty": "豬腳飯",
+    "area": "中西區",
+    "description": "招牌滷豬腳飯"
+  },
+  {
+    "name": "王家香腸熟肉",
+    "specialty": "香腸熟肉",
+    "area": "中西區",
+    "description": "在地香腸熟肉攤"
+  },
+  {
+    "name": "周氏茶油雞",
+    "specialty": "茶油雞",
+    "area": "中西區",
+    "description": "古早茶油雞湯"
+  },
+  {
+    "name": "楊記花生湯",
+    "specialty": "花生湯",
+    "area": "中西區",
+    "description": "暖心花生湯"
+  },
+  {
+    "name": "吳媽媽肉圓",
+    "specialty": "肉圓",
+    "area": "中西區",
+    "description": "手工肉圓皮Q餡香"
+  },
+  {
+    "name": "阿義滷味",
+    "specialty": "滷味",
+    "area": "中西區",
+    "description": "滷味多樣平價"
+  },
+  {
+    "name": "古早味燒麻糬",
+    "specialty": "燒麻糬",
+    "area": "中西區",
+    "description": "香脆麻糬"
+  },
+  {
+    "name": "手工水晶餃",
+    "specialty": "水晶餃",
+    "area": "中西區",
+    "description": "透明皮水晶餃"
+  },
+  {
+    "name": "元馨鍋燒",
+    "specialty": "鍋燒意麵",
+    "area": "北區",
+    "description": "料多實在、湯頭精燉香濃"
+  },
+  {
+    "name": "阿茂麵店",
+    "specialty": "麵食",
+    "area": "北區",
+    "description": "家傳祖傳醬料，30年老店"
+  },
+  {
+    "name": "老店肉粽菜粽",
+    "specialty": "肉粽/菜粽",
+    "area": "中西區",
+    "description": "西門路百年粽子攤，搭味噌湯"
+  },
+  {
+    "name": "旗哥牛肉湯",
+    "specialty": "牛肉湯＋肉燥飯",
+    "area": "北區",
+    "description": "中華北路強打甘甜湯＋肉飯"
+  },
+  {
+    "name": "公園口紅燒土魠魚羹",
+    "specialty": "土魠魚羹",
+    "area": "中西區",
+    "description": "轉運站旁，20多年老店"
+  },
+  {
+    "name": "老友小吃店",
+    "specialty": "三鮮煎麵",
+    "area": "北區",
+    "description": "成功大學周邊、李安推薦"
+  },
+  {
+    "name": "泉城點心店",
+    "specialty": "炸物",
+    "area": "中西區",
+    "description": "鴨母寮市場70年老店炸物"
+  },
+  {
+    "name": "豆簽羹",
+    "specialty": "豆簽羹",
+    "area": "北區",
+    "description": "米豆粉條搭絲瓜蚵仔，古早味羹湯"
+  },
+  {
+    "name": "竹滬麵店",
+    "specialty": "家鄉乾濕麵",
+    "area": "中西區",
+    "description": "60年老攤車起家，文青風格麵店"
+  },
+  {
+    "name": "中山公園黑輪攤",
+    "specialty": "黑輪",
+    "area": "中西區",
+    "description": "圖書館旁下午茶攤"
+  },
+  {
+    "name": "明月麵店",
+    "specialty": "乾麵",
+    "area": "中西區",
+    "description": "70年老店，巷弄人氣麵攤"
+  },
+  {
+    "name": "幽靈炒飯",
+    "specialty": "炒飯",
+    "area": "中西區",
+    "description": "深夜限量排隊出攤"
+  },
+  {
+    "name": "郭記爌肉米糕",
+    "specialty": "爌肉米糕",
+    "area": "中西區",
+    "description": "銅板價、大份量飽足宵夜"
+  },
+  {
+    "name": "護境松王無名麵攤",
+    "specialty": "宵夜乾麵",
+    "area": "中西區",
+    "description": "巷內隱藏宵夜麵攤"
+  },
+  {
+    "name": "阿雪黑輪米血湯",
+    "specialty": "黑輪米血",
+    "area": "中西區",
+    "description": "快速道路底下運將愛攤"
+  },
+  {
+    "name": "阿公阿婆蛋餅",
+    "specialty": "手作蛋餅",
+    "area": "中西區",
+    "description": "大份量銅板價早餐"
+  },
+  {
+    "name": "中山路無名米糕",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "肉燥＋滷腸，銅板價美味"
+  },
+  {
+    "name": "鴨母寮市場無名剉冰",
+    "specialty": "剉冰",
+    "area": "中西區",
+    "description": "任選4料只要30元"
+  },
+  {
+    "name": "明月乾麵",
+    "specialty": "乾麵",
+    "area": "中西區",
+    "description": "70年老乾麵，口碑好"
+  },
+  {
+    "name": "葉麥克炸雞",
+    "specialty": "炸雞",
+    "area": "中西區",
+    "description": "下午小吃排隊攤"
+  },
+  {
+    "name": "糯夫米糕",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "麻油香、古早味"
+  },
+  {
+    "name": "祿記包子水晶餃",
+    "specialty": "包子／水晶餃",
+    "area": "中西區",
+    "description": "皮薄Q餡汁鮮美"
+  },
+  {
+    "name": "921地瓜球",
+    "specialty": "地瓜球",
+    "area": "中西區",
+    "description": "外脆內Q，地瓜香濃"
+  },
+  {
+    "name": "蛋餅小二",
+    "specialty": "起司蛋餅",
+    "area": "中西區",
+    "description": "雙色起司，C/P值高"
+  },
+  {
+    "name": "水仙宮古早味早餐",
+    "specialty": "飯糰",
+    "area": "中西區",
+    "description": "人氣阿婆飯糰攤"
+  },
+  {
+    "name": "紅記早點",
+    "specialty": "蛋餅",
+    "area": "中西區",
+    "description": "起司控推薦起司蛋餅"
+  },
+  {
+    "name": "吐司吐司早餐",
+    "specialty": "蛋餅",
+    "area": "中西區",
+    "description": "薯泥起司大份量"
+  },
+  {
+    "name": "少爺手作蛋餅",
+    "specialty": "蛋餅",
+    "area": "中西區",
+    "description": "流沙／薯泥口味"
+  },
+  {
+    "name": "千香漢堡",
+    "specialty": "麥蛋堡",
+    "area": "中西區",
+    "description": "中央廚房柔軟吐司"
+  },
+  {
+    "name": "鼎勝發包子",
+    "specialty": "包子",
+    "area": "中西區",
+    "description": "爆漿包子、巧克力餡"
+  },
+  {
+    "name": "三元坊泡芙",
+    "specialty": "泡芙",
+    "area": "中西區",
+    "description": "平價爆餡銅板美食"
+  },
+  {
+    "name": "央米紅豆餅",
+    "specialty": "紅豆餅",
+    "area": "中西區",
+    "description": "珍珠＋奶油內餡"
+  },
+  {
+    "name": "文賢路雞蛋糕",
+    "specialty": "雞蛋糕",
+    "area": "中西區",
+    "description": "老牌雞蛋糕攤"
+  },
+  {
+    "name": "王氏富屋金蕉條",
+    "specialty": "香蕉條雞蛋糕",
+    "area": "中西區",
+    "description": "可牽絲人氣小吃"
+  },
+  {
+    "name": "小豫竹炭雞蛋糕",
+    "specialty": "竹炭雞蛋糕",
+    "area": "中西區",
+    "description": "貓掌造型、有機食材"
+  },
+  {
+    "name": "陳家大腸包香腸",
+    "specialty": "大腸包香腸",
+    "area": "中西區",
+    "description": "手工米腸＋香腸"
+  },
+  {
+    "name": "T&F 手作吐司",
+    "specialty": "熱壓吐司",
+    "area": "中西區",
+    "description": "凌晨也有營業"
+  },
+  {
+    "name": "陳媽媽涼麵",
+    "specialty": "涼麵",
+    "area": "中西區",
+    "description": "蒜香麻醬開胃"
+  },
+  {
+    "name": "水星杏仁豆腐冰",
+    "specialty": "杏仁豆腐冰",
+    "area": "中西區",
+    "description": "Q彈涼爽甜品"
+  },
+  {
+    "name": "石家阿美綠豆湯",
+    "specialty": "綠豆湯",
+    "area": "中西區",
+    "description": "料多碗大銅板價"
+  },
+  {
+    "name": "開山順天冰棒",
+    "specialty": "冰棒",
+    "area": "中西區",
+    "description": "甲子老店古早味"
+  },
+  {
+    "name": "萬伯鹹粥",
+    "specialty": "鹹粥",
+    "area": "中西區",
+    "description": "北區老店鹹粥好味"
   }
-] 
+]
