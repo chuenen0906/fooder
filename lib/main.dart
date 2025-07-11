@@ -18,10 +18,9 @@ import 'services/firebase_config.dart';
 import 'services/firebase_restaurant_service.dart';
 import 'services/local_restaurant_service.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'photo_upload_screen.dart';
+
 import 'dart:ui';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:image_picker/image_picker.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,7 +62,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   List<Map<String, dynamic>> fullRestaurantList = [];
   List<Map<String, dynamic>> currentRoundList = [];
   final List<String> liked = [];
-  final Set<String> favorites = {};
+
   int round = 1;
   int cardSwiperKey = 0;
   int selectedIndex = 0;
@@ -303,7 +302,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     _loadCacheStats();
     
     fetchAllRestaurants(radiusKm: searchRadius, onlyShowOpen: true);
-    loadFavorites();
+
     
     // 初始化隨機標題
     _updateRound1Title();
@@ -709,17 +708,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     return DateTime.now().difference(lastCall) >= _apiCooldown;
   }
 
-  Future<void> loadFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      favorites.addAll(prefs.getStringList('favorites') ?? []);
-    });
-  }
 
-  Future<void> saveFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('favorites', favorites.toList());
-  }
 
   Future<bool> canSearchToday() async {
     return true;
@@ -1693,9 +1682,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ),
                   );
                   break;
-                case 'test_permissions':
-                  await _testPermissions();
-                  break;
+
                 case 'firebase_photo_manager':
                   _showFirebasePhotoManager();
                   break;
@@ -1768,17 +1755,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ],
                   ),
                 ),
-                // 新增：測試權限
-                PopupMenuItem<String>(
-                  value: 'test_permissions',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.security, color: Colors.purple),
-                      const SizedBox(width: 8),
-                      const Text('測試權限'),
-                    ],
-                  ),
-                ),
+
                 // 新增：Firebase 照片管理
                 PopupMenuItem<String>(
                   value: 'firebase_photo_manager',
@@ -2131,11 +2108,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     final rating = restaurant['rating'];
     final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
     
-    // 多圖輪播
+    // 多圖輪播（最多 5 張）
     List<String> photoUrls = [];
     if (restaurant['photo_urls'] != null) {
       try {
-        photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+        final allPhotos = List<String>.from(json.decode(restaurant['photo_urls']!));
+        photoUrls = allPhotos.take(5).toList(); // 限制最多 5 張
       } catch (_) {}
     }
     if (photoUrls.isEmpty) {
@@ -2476,11 +2454,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
               final String openStatus = getOpenStatus(restaurant);
               
-              // 多圖輪播
+              // 多圖輪播（最多 5 張）
               List<String> photoUrls = [];
               if (restaurant['photo_urls'] != null) {
                 try {
-                  photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+                  final allPhotos = List<String>.from(json.decode(restaurant['photo_urls']!));
+                  photoUrls = allPhotos.take(5).toList(); // 限制最多 5 張
                 } catch (_) {}
               }
               if (photoUrls.isEmpty) {
@@ -2500,17 +2479,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                       MaterialPageRoute(
                         builder: (context) => RestaurantDetailPage(
                           restaurant: restaurant,
-                          favorites: favorites,
-                          onToggleFavorite: (String name) {
-                            setState(() {
-                              if (favorites.contains(name)) {
-                                favorites.remove(name);
-                              } else {
-                                favorites.add(name);
-                              }
-                              saveFavorites();
-                            });
-                          },
                           classifyRestaurant: classifyRestaurant,
                           getOpenStatus: getOpenStatus,
                         ),
@@ -2538,49 +2506,38 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                             Positioned(
                               top: 8,
                               right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  openStatus,
-                                  style: const TextStyle(fontSize: 14, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                            // 收藏按鈕
-                            Positioned(
-                              top: 8,
-                              left: 8,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    favorites.contains(restaurant['name'] ?? '')
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: Colors.amber,
-                                    size: 20,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.7),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      openStatus,
+                                      style: const TextStyle(fontSize: 14, color: Colors.white),
+                                    ),
                                   ),
-                                  onPressed: () {
-                                    setState(() {
-                                      String name = restaurant['name'] ?? '';
-                                      if (favorites.contains(name)) {
-                                        favorites.remove(name);
-                                      } else {
-                                        favorites.add(name);
-                                      }
-                                      saveFavorites();
-                                    });
-                                  },
-                                ),
+                                  // 照片數量指示器（當有多張照片時顯示）
+                                  if (photoUrls.length > 1)
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withOpacity(0.8),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '${photoUrls.length} 張',
+                                        style: const TextStyle(fontSize: 12, color: Colors.white),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
+
                           ],
                         ),
                       ),
@@ -2726,11 +2683,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               final String specialty = restaurant['specialty']?.toString() ?? '';
               final String area = restaurant['area']?.toString() ?? '';
               
-              // 多圖輪播
+              // 多圖輪播（最多 5 張）
               List<String> photoUrls = [];
               if (restaurant['photo_urls'] != null) {
                 try {
-                  photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+                  final allPhotos = List<String>.from(json.decode(restaurant['photo_urls']!));
+                  photoUrls = allPhotos.take(5).toList(); // 限制最多 5 張
                 } catch (_) {}
               }
               if (photoUrls.isEmpty) {
@@ -2762,22 +2720,46 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           // 圖片區
                           ClipRRect(
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                            child: Stack(
-                              children: [
-                                SizedBox(
-                                  height: 200,
-                                  child: PageView.builder(
-                                    itemCount: photoUrls.length,
-                                    itemBuilder: (context, pageIndex) {
-                                      return _buildImageWidget(
-                                        photoUrls[pageIndex],
-                                        height: 200,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      );
-                                    },
+                                                          child: Stack(
+                                children: [
+                                  SizedBox(
+                                    height: 200,
+                                    child: PageView.builder(
+                                      itemCount: photoUrls.length,
+                                      onPageChanged: (pageIndex) {
+                                        // 更新當前照片索引（如果需要的話）
+                                      },
+                                      itemBuilder: (context, pageIndex) {
+                                        return _buildImageWidget(
+                                          photoUrls[pageIndex],
+                                          height: 200,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        );
+                                      },
+                                    ),
                                   ),
-                                ),
+                                  // 照片數量指示器（當有多張照片時顯示）
+                                  if (photoUrls.length > 1)
+                                    Positioned(
+                                      top: 12,
+                                      right: 12,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.7),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          '${photoUrls.length} 張照片',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                 Positioned(
                                   left: 0,
                                   bottom: 0,
@@ -2943,32 +2925,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.add_a_photo, color: Colors.orange, size: 32),
-                              onPressed: () {
-                                _openPhotoUploadScreen(restaurant);
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(
-                                favorites.contains(restaurant['name'] ?? '') ? Icons.star : Icons.star_border,
-                                color: Colors.amber,
-                                size: 32,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  String name = restaurant['name'] ?? '';
-                                  if (favorites.contains(name)) {
-                                    favorites.remove(name);
-                                  } else {
-                                    favorites.add(name);
-                                  }
-                                  saveFavorites();
-                                });
-                              },
-                            ),
-                            const SizedBox(width: 8),
+
+
                             IconButton(
                               icon: const Icon(Icons.navigation, color: Colors.deepPurple, size: 32),
                               onPressed: () {
@@ -3267,92 +3225,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   // loadJsonData 方法已移除，現在只使用 Google API + Firebase 照片
 
-  // 測試權限狀態
-  Future<void> _testPermissions() async {
-    final cameraStatus = await Permission.camera.status;
-    final photosStatus = await Permission.photos.status;
-    final locationStatus = await Permission.locationWhenInUse.status;
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('權限狀態檢查'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPermissionRow('📷 相機', cameraStatus),
-            _buildPermissionRow('📸 相簿', photosStatus),
-            _buildPermissionRow('📍 定位', locationStatus),
-            const SizedBox(height: 16),
-            const Text('如果權限被拒絕，請手動到設定中開啟'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('關閉'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              openAppSettings();
-            },
-            child: const Text('前往設定'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPermissionRow(String name, PermissionStatus status) {
-    Color color;
-    String statusText;
-    
-    switch (status) {
-      case PermissionStatus.granted:
-        color = Colors.green;
-        statusText = '已授權';
-        break;
-      case PermissionStatus.limited:
-        color = Colors.orange;
-        statusText = '限制授權';
-        break;
-      case PermissionStatus.denied:
-        color = Colors.red;
-        statusText = '被拒絕';
-        break;
-      case PermissionStatus.permanentlyDenied:
-        color = Colors.red.shade800;
-        statusText = '永久拒絕';
-        break;
-      default:
-        color = Colors.grey;
-        statusText = '未知';
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(name),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color),
-            ),
-            child: Text(
-              statusText,
-              style: TextStyle(color: color, fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // 顯示定位權限對話框
   void _showLocationPermissionDialog() {
@@ -3499,7 +3372,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                             ),
                           ),
                           Text(
-                            '共 ${stats['total_firebase_restaurants']} 家餐廳，${stats['total_firebase_photos']} 張照片',
+                            '共 ${stats['total_firebase_restaurants']} 家餐廳，${stats['total_firebase_photos']} 張照片（最多 5 張/家）',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -3521,7 +3394,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   itemCount: restaurantNames.length,
                   itemBuilder: (context, index) {
                     final restaurantName = restaurantNames[index];
-                    final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName);
+                    final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName, maxPhotos: 5);
                     
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -3549,11 +3422,33 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                             color: Colors.grey[600],
                           ),
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showFirebasePhotoDetail(restaurantName, photos);
-                        },
+                                trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (photos.length > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: photos.length >= 5 ? Colors.green : Colors.orange,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  photos.length >= 5 ? '滿' : '${photos.length}/5',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward_ios, size: 16),
+          ],
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          _showFirebasePhotoDetail(restaurantName, photos);
+        },
                       ),
                     );
                   },
@@ -3778,62 +3673,19 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     }
   }
 
-  // 開啟照片上傳頁面
-  void _openPhotoUploadScreen(Map<String, dynamic> restaurant) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PhotoUploadScreen(restaurant: restaurant),
-      ),
-    ).then((result) {
-      if (result == true) {
-        // 照片上傳成功，可以在這裡添加一些回饋
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('照片上傳成功！'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    });
-  }
 
-  Future<bool> requestGalleryPermission() async {
-    final status = await Permission.photos.request();
-    print('Photo permission status: $status');
-    return status.isGranted || status.isLimited;
-  }
 
-  Future<bool> requestPhotoPermission() async {
-    var status = await Permission.photos.request();
-    return status.isGranted;
-  }
 
-  Future<void> pickImage() async {
-    var status = await Permission.photos.request();
-    if (status.isGranted) {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      // ...後續處理
-    } else {
-      // 顯示權限不足提示
-    }
-  }
 }
 
 class RestaurantDetailPage extends StatelessWidget {
   final Map<String, dynamic> restaurant;
-  final Set<String> favorites;
-  final Function(String) onToggleFavorite;
   final Function(List, Map<String, dynamic>) classifyRestaurant;
   final Function(Map<String, dynamic>) getOpenStatus;
   
   const RestaurantDetailPage({
     super.key, 
     required this.restaurant,
-    required this.favorites,
-    required this.onToggleFavorite,
     required this.classifyRestaurant,
     required this.getOpenStatus,
   });
@@ -3896,11 +3748,12 @@ class RestaurantDetailPage extends StatelessWidget {
     final String ratingText = (rating != null && rating.toString().isNotEmpty) ? rating.toString() : '無';
     final String openStatus = getOpenStatus(restaurant);
     
-    // 多圖輪播
+    // 多圖輪播（最多 5 張）
     List<String> photoUrls = [];
     if (restaurant['photo_urls'] != null) {
       try {
-        photoUrls = List<String>.from(json.decode(restaurant['photo_urls']!));
+        final allPhotos = List<String>.from(json.decode(restaurant['photo_urls']!));
+        photoUrls = allPhotos.take(5).toList(); // 限制最多 5 張
       } catch (_) {}
     }
     if (photoUrls.isEmpty) {
@@ -3914,17 +3767,6 @@ class RestaurantDetailPage extends StatelessWidget {
         foregroundColor: Colors.black,
         elevation: 1,
         actions: [
-          IconButton(
-            icon: Icon(
-              favorites.contains(restaurant['name'] ?? '')
-                  ? Icons.star
-                  : Icons.star_border,
-              color: Colors.amber,
-            ),
-            onPressed: () {
-              onToggleFavorite(restaurant['name'] ?? '');
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.navigation, color: Colors.deepPurple),
             onPressed: () {
@@ -3944,16 +3786,41 @@ class RestaurantDetailPage extends StatelessWidget {
             // 圖片輪播
             SizedBox(
               height: 250,
-              child: PageView.builder(
-                itemCount: photoUrls.length,
-                itemBuilder: (context, index) {
-                  return _buildImageWidget(
-                    photoUrls[index],
-                    height: 250,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  );
-                },
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    itemCount: photoUrls.length,
+                    itemBuilder: (context, index) {
+                      return _buildImageWidget(
+                        photoUrls[index],
+                        height: 250,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  ),
+                  // 照片數量指示器（當有多張照片時顯示）
+                  if (photoUrls.length > 1)
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Text(
+                          '${photoUrls.length} 張照片',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             // 餐廳資訊

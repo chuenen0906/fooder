@@ -6,10 +6,11 @@ class FirebaseRestaurantService {
   factory FirebaseRestaurantService() => _instance;
   FirebaseRestaurantService._internal();
 
-  // Firebase 上傳的餐廳照片映射 - 自動生成於 2025-07-10
+  // Firebase 上傳的餐廳照片映射 - 自動生成於 2025-07-11
   static const Map<String, List<String>> _restaurantPhotoUrls = {
     "金得春捲": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2/%E9%87%91%E5%BE%97%E6%98%A5%E6%8D%B2_2.jpg"
     ],
     "石精臼蚵仔煎": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%9F%B3%E7%B2%BE%E8%87%BC%E8%9A%B5%E4%BB%94%E7%85%8E/%E7%9F%B3%E7%B2%BE%E8%87%BC%E8%9A%B5%E4%BB%94%E7%85%8E.jpg"
@@ -18,7 +19,8 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%AF%8C%E7%9B%9B%E8%99%9F%E7%A2%97%E7%B2%BF/%E5%AF%8C%E7%9B%9B%E8%99%9F%E7%A2%97%E7%B2%BF.jpg"
     ],
     "阿堂鹹粥": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5/atang_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5/atang_2.jpg"
     ],
     "邱家小卷米粉": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89.jpg"
@@ -604,11 +606,12 @@ class FirebaseRestaurantService {
     ]
   };
 
-  /// 根據餐廳名稱獲取 Firebase 上的照片 URL
-  static List<String> getFirebasePhotos(String restaurantName) {
+  /// 根據餐廳名稱獲取 Firebase 上的照片 URL（最多 5 張）
+  static List<String> getFirebasePhotos(String restaurantName, {int maxPhotos = 5}) {
     // 精確匹配
     if (_restaurantPhotoUrls.containsKey(restaurantName)) {
-      return _restaurantPhotoUrls[restaurantName]!;
+      final photos = _restaurantPhotoUrls[restaurantName]!;
+      return photos.take(maxPhotos).toList();
     }
     
     // 模糊匹配 - 處理名稱可能的變化
@@ -618,7 +621,7 @@ class FirebaseRestaurantService {
       // 如果 Google API 的名稱包含 Firebase 的名稱，或反之
       if (restaurantName.contains(firebaseName) || firebaseName.contains(restaurantName)) {
         print("🔍 模糊匹配成功: '$restaurantName' -> '$firebaseName'");
-        return entry.value;
+        return entry.value.take(maxPhotos).toList();
       }
       
       // 去除常見的店面相關詞語進行比較
@@ -627,7 +630,7 @@ class FirebaseRestaurantService {
       
       if (cleanGoogleName == cleanFirebaseName) {
         print("🔍 清理後匹配成功: '$restaurantName' -> '$firebaseName'");
-        return entry.value;
+        return entry.value.take(maxPhotos).toList();
       }
     }
     

@@ -1,12 +1,13 @@
 [
   {
-    "name": "石精臼蚵仔煎",
-    "specialty": "蚵仔煎",
+    "name": "阿堂鹹粥",
+    "specialty": "鹹粥",
     "area": "中西區",
-    "description": "肥美蚵仔加豆芽與肉燥",
+    "description": "綜合海鮮料多，老油條必配",
     "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%9F%B3%E7%B2%BE%E8%87%BC%E8%9A%B5%E4%BB%94%E7%85%8E/%E7%9F%B3%E7%B2%BE%E8%87%BC%E8%9A%B5%E4%BB%94%E7%85%8E.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5/atang_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5/atang_2.jpg"
     ],
-    "uploaded_at": "2025-07-11T19:03:42.097418"
+    "uploaded_at": "2025-07-11T23:40:25.525191"
   }
 ]

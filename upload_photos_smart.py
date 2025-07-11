@@ -59,8 +59,8 @@ def get_restaurants_to_process(restaurants_data, args):
         print(f"🎯 處理所有 {len(restaurants_data)} 間餐廳")
         return restaurants_data
 
-def upload_restaurant_photos(bucket, restaurant, image_root):
-    """上傳單一餐廳的照片"""
+def upload_restaurant_photos(bucket, restaurant, image_root, max_photos=5):
+    """上傳單一餐廳的照片（最多 5 張）"""
     restaurant_name = restaurant['name']
     restaurant_path = os.path.join(image_root, restaurant_name)
     
@@ -71,11 +71,14 @@ def upload_restaurant_photos(bucket, restaurant, image_root):
     photo_urls = []
     uploaded_count = 0
     skipped_count = 0
+    processed_photos = 0
     
-    for filename in os.listdir(restaurant_path):
-        if not filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
-            continue
-        
+    # 只處理前 5 張照片
+    photo_files = [f for f in os.listdir(restaurant_path) 
+                   if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+    photo_files = photo_files[:max_photos]  # 限制最多 5 張
+    
+    for filename in photo_files:        
         local_path = os.path.join(restaurant_path, filename)
         storage_path = f'restaurant_photos/{restaurant_name}/{filename}'
         
@@ -122,6 +125,9 @@ def upload_restaurant_photos(bucket, restaurant, image_root):
     
     # 如果有照片 URL，建立餐廳資料
     if photo_urls:
+        if len(photo_files) > max_photos:
+            print(f"📸 {restaurant_name}: 找到 {len(photo_files)} 張照片，僅處理前 {max_photos} 張")
+        
         restaurant_data = {
             'name': restaurant['name'],
             'specialty': restaurant['specialty'],
