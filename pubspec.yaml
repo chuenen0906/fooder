@@ -73,6 +73,7 @@ flutter:
     - assets/restaurants_collection/xiluodian/
     - assets/restaurants_collection/wenzhang/
     - assets/restaurants_collection/niujiazhuang/
+    - tainan_markets.json
     - .env
 
 flutter_launcher_icons:

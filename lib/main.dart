@@ -16,6 +16,7 @@ import 'services/log_service.dart';
 import 'services/place_details_cache_service.dart';
 import 'services/firebase_config.dart';
 import 'services/firebase_restaurant_service.dart';
+import 'services/local_restaurant_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'photo_upload_screen.dart';
 import 'dart:ui';
@@ -169,6 +170,22 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   
   // 新增：可調整的餐廳搜尋數量
   int _targetRestaurantCount = 20; // 使用者模式：每次搜尋 20 家
+  
+  // 🔍 新增：搜尋功能相關變數
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
+  List<Map<String, dynamic>> _searchResults = [];
+  List<Map<String, dynamic>> _originalRestaurantList = [];
+  
+  // 快速篩選相關
+  String _selectedArea = '';
+  String _selectedSpecialty = '';
+  List<String> _availableAreas = [];
+  List<String> _availableSpecialties = [];
+  
+  // 搜尋模式
+  bool _isSearchMode = false;
   // TODO: 給朋友使用時改為 15-20 間餐廳
   
   // 新增：快取優化設定
@@ -324,13 +341,153 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
     _loadPlaceDetailsCache(); // 讀取 Place Details 快取
     _loadPhotoUrlCache(); // 讀取照片 URL 快取
+    _initializeSearchFilters(); // 初始化搜尋篩選
   }
 
   @override
   void dispose() {
     _swipeAnimationController.dispose();
     _titleTapTimer?.cancel();
+    _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+  
+  // 🔍 搜尋功能相關方法
+  Future<void> _initializeSearchFilters() async {
+    // 從現有餐廳列表中提取可用的區域和特色料理
+    await _updateFilterOptions();
+  }
+  
+  Future<void> _updateFilterOptions() async {
+    try {
+      // 從本地資料庫獲取所有餐廳
+      final allRestaurants = await LocalRestaurantService.loadLocalRestaurants();
+      
+      // 提取所有區域
+      final areas = allRestaurants
+          .map((r) => r['area']?.toString() ?? '')
+          .where((area) => area.isNotEmpty)
+          .toSet()
+          .toList();
+      areas.sort();
+      
+      // 提取所有特色料理
+      final specialties = allRestaurants
+          .map((r) => r['specialty']?.toString() ?? '')
+          .where((specialty) => specialty.isNotEmpty)
+          .toSet()
+          .toList();
+      specialties.sort();
+      
+      if (mounted) {
+        setState(() {
+          _availableAreas = areas;
+          _availableSpecialties = specialties;
+        });
+      }
+      
+      print('📋 篩選選項更新: ${areas.length} 個區域, ${specialties.length} 種特色');
+    } catch (e) {
+      print('❌ 更新篩選選項失敗: $e');
+    }
+  }
+  
+  void _performSearch(String query) {
+    if (query.isEmpty && _selectedArea.isEmpty && _selectedSpecialty.isEmpty) {
+      _clearSearch();
+      return;
+    }
+    
+    setState(() {
+      _searchQuery = query;
+      _isSearching = true;
+      _isSearchMode = true;
+    });
+    
+    _filterRestaurants();
+  }
+  
+  void _filterRestaurants() {
+    if (_originalRestaurantList.isEmpty) {
+      _originalRestaurantList = List.from(fullRestaurantList);
+    }
+    
+    List<Map<String, dynamic>> filtered = List.from(_originalRestaurantList);
+    
+    // 文字搜尋
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((restaurant) {
+        final name = restaurant['name']?.toString().toLowerCase() ?? '';
+        final specialty = restaurant['specialty']?.toString().toLowerCase() ?? '';
+        final area = restaurant['area']?.toString().toLowerCase() ?? '';
+        final description = restaurant['description']?.toString().toLowerCase() ?? '';
+        final query = _searchQuery.toLowerCase();
+        
+        return name.contains(query) ||
+               specialty.contains(query) ||
+               area.contains(query) ||
+               description.contains(query);
+      }).toList();
+    }
+    
+    // 區域篩選
+    if (_selectedArea.isNotEmpty) {
+      filtered = filtered.where((restaurant) {
+        final area = restaurant['area']?.toString() ?? '';
+        return area == _selectedArea;
+      }).toList();
+    }
+    
+    // 特色料理篩選
+    if (_selectedSpecialty.isNotEmpty) {
+      filtered = filtered.where((restaurant) {
+        final specialty = restaurant['specialty']?.toString() ?? '';
+        return specialty.contains(_selectedSpecialty);
+      }).toList();
+    }
+    
+    setState(() {
+      _searchResults = filtered;
+      _isSearching = false;
+      currentRoundList = List.from(filtered)..shuffle();
+      round = 1;
+      liked.clear();
+      cardSwiperKey++;
+    });
+    
+    print('🔍 搜尋結果: ${filtered.length} 間餐廳');
+  }
+  
+  void _clearSearch() {
+    setState(() {
+      _searchQuery = '';
+      _selectedArea = '';
+      _selectedSpecialty = '';
+      _isSearchMode = false;
+      _searchResults.clear();
+      currentRoundList = List.from(_originalRestaurantList.isEmpty ? fullRestaurantList : _originalRestaurantList)..shuffle();
+      round = 1;
+      liked.clear();
+      cardSwiperKey++;
+    });
+    
+    _searchController.clear();
+    print('🔍 清除搜尋結果');
+  }
+  
+  void _selectArea(String area) {
+    setState(() {
+      _selectedArea = area;
+    });
+    _filterRestaurants();
+  }
+  
+  void _selectSpecialty(String specialty) {
+    setState(() {
+      _selectedSpecialty = specialty;
+    });
+    _filterRestaurants();
   }
 
   // 新增：用戶 ID 相關方法
@@ -661,6 +818,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           if(mounted) {
             setState(() {
               fullRestaurantList = cachedRestaurants;
+              _originalRestaurantList = List.from(cachedRestaurants); // 🔍 更新搜尋用的原始列表
               currentRoundList = List.from(cachedRestaurants)..shuffle();
               isLoading = false;
               isSplash = false;
@@ -686,6 +844,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               setState(() {
                 _loadingText = '顯示快取資料...';
                 fullRestaurantList = List.from(cachedRestaurants);
+                _originalRestaurantList = List.from(cachedRestaurants); // 🔍 更新搜尋用的原始列表
                 currentRoundList = List.from(cachedRestaurants)..shuffle();
                 isLoading = false;
                 isSplash = false;
@@ -729,6 +888,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           if (mounted) {
             setState(() {
               fullRestaurantList = filteredRestaurants;
+              _originalRestaurantList = List.from(filteredRestaurants); // 🔍 更新搜尋用的原始列表
               currentRoundList = List.from(filteredRestaurants)..shuffle();
               round = 1;
               liked.clear();
@@ -812,8 +972,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               .compareTo(double.parse(b['distance'] ?? '999999')));
 
       if (mounted) {
-        setState(() {
+        setState(() {        
           fullRestaurantList = finalList;
+          _originalRestaurantList = List.from(finalList); // 🔍 更新搜尋用的原始列表
           currentRoundList = List.from(finalList)..shuffle();
           round = 1;
           liked.clear();
@@ -874,25 +1035,95 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     double centerLat = position.latitude;
     double centerLng = position.longitude;
 
-    // 只取 Nearby Search 實際回傳的 placeIds
-    List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
+    List<Map<String, dynamic>> allRestaurants = [];
 
-    // 只對實際回傳的 placeIds 發送 Details/Photo 請求
-    List<Future<Map<String, dynamic>?>> detailFutures = [];
-    for (final placeId in placeIds) {
-      if (_placeDetailsCache.containsKey(placeId)) {
-        final cachedJson = _placeDetailsCache[placeId]!;
-        final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
-        detailFutures.add(Future.value(decodedDetails));
-      } else {
-        detailFutures.add(_fetchPlaceDetails(placeId, centerLat, centerLng));
+    // 🔥 新增：載入本地餐廳資料
+    try {
+      if (mounted) {
+        setState(() {
+          _loadingText = '載入台南本地餐廳資料...';
+        });
       }
+      
+      final localRestaurants = await LocalRestaurantService.searchLocalRestaurants(
+        lat: centerLat,
+        lng: centerLng,
+        radiusKm: radiusKm,
+      );
+      
+      // 轉換為 Google API 格式並整合 Firebase 照片
+      for (final localRestaurant in localRestaurants) {
+        final convertedRestaurant = LocalRestaurantService.convertToGoogleFormat(localRestaurant);
+        final enhancedRestaurant = FirebaseRestaurantService.enhanceRestaurantWithFirebasePhotos(convertedRestaurant);
+        
+        // 如果有 Firebase 照片，更新 image 欄位
+        if (enhancedRestaurant['has_firebase_photos'] == true) {
+          final firebasePhotos = json.decode(enhancedRestaurant['photo_urls'] ?? '[]') as List;
+          if (firebasePhotos.isNotEmpty) {
+            enhancedRestaurant['image'] = firebasePhotos.first;
+          }
+        }
+        
+        allRestaurants.add(enhancedRestaurant);
+      }
+      
+      print('📚 整合本地餐廳: ${localRestaurants.length} 間');
+    } catch (e) {
+      print('❌ 載入本地餐廳失敗: $e');
     }
 
-    final List<Map<String, dynamic>?> detailedRestaurants = await Future.wait(detailFutures);
+    // 🔥 更新：載入 Google API 餐廳資料
+    try {
+      if (mounted) {
+        setState(() {
+          _loadingText = '搜尋 Google 餐廳資料...';
+        });
+      }
+      
+      // 只取 Nearby Search 實際回傳的 placeIds
+      List<String> placeIds = await _getPlaceIdsFromNearbySearch(centerLat, centerLng, radiusKm * 1000, onlyShowOpen);
 
-    // 過濾掉 null
-    return detailedRestaurants.where((r) => r != null).cast<Map<String, dynamic>>().toList();
+      // 只對實際回傳的 placeIds 發送 Details/Photo 請求
+      List<Future<Map<String, dynamic>?>> detailFutures = [];
+      for (final placeId in placeIds) {
+        if (_placeDetailsCache.containsKey(placeId)) {
+          final cachedJson = _placeDetailsCache[placeId]!;
+          final Map<String, dynamic> decodedDetails = json.decode(cachedJson);
+          detailFutures.add(Future.value(decodedDetails));
+        } else {
+          detailFutures.add(_fetchPlaceDetails(placeId, centerLat, centerLng));
+        }
+      }
+
+      final List<Map<String, dynamic>?> detailedRestaurants = await Future.wait(detailFutures);
+      
+      // 過濾掉 null 並加入總列表
+      final googleRestaurants = detailedRestaurants.where((r) => r != null).cast<Map<String, dynamic>>().toList();
+      allRestaurants.addAll(googleRestaurants);
+      
+      print('🌐 整合 Google 餐廳: ${googleRestaurants.length} 間');
+    } catch (e) {
+      print('❌ 載入 Google 餐廳失敗: $e');
+    }
+
+    // 🔥 去重複：優先保留本地資料庫的餐廳
+    final Map<String, Map<String, dynamic>> uniqueRestaurants = {};
+    
+    for (final restaurant in allRestaurants) {
+      final name = restaurant['name']?.toString() ?? '';
+      if (name.isNotEmpty) {
+        // 如果已經存在同名餐廳，優先保留本地資料庫的
+        if (!uniqueRestaurants.containsKey(name) || 
+            restaurant['source'] == 'local_database') {
+          uniqueRestaurants[name] = restaurant;
+        }
+      }
+    }
+    
+    final finalRestaurants = uniqueRestaurants.values.toList();
+    print('📊 最終餐廳列表: ${finalRestaurants.length} 間 (去重複後)');
+    
+    return finalRestaurants;
   }
 
   Future<List<String>> _getPlaceIdsFromNearbySearch(double lat, double lng, double radius, bool onlyShowOpen) async {
@@ -1026,23 +1257,28 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
             ? List<String>.from(item['photos'].map((p) => p['photo_reference']))
             : <String>[];
 
-        // 新增：開發模式下跳過照片請求以節省 API 用量
+        // 🔥 優化：檢查是否有 Firebase 照片，避免不必要的 Google Photos API 呼叫
+        final restaurantName = item['name'] ?? '';
+        final hasFirebasePhotos = FirebaseRestaurantService.hasFirebasePhotos(restaurantName);
+        
         List<String> photoUrls = [];
-        if (photoReferences.isNotEmpty && !_disablePhotosForTesting) {
+        String photoUrl = 'https://via.placeholder.com/400x300.png?text=No+Image';
+        
+        if (hasFirebasePhotos) {
+          // 如果有 Firebase 照片，跳過 Google Photos API 呼叫
+          print("✅ 跳過 Google Photos API（已有 Firebase 照片）: $restaurantName");
+        } else if (photoReferences.isNotEmpty && !_disablePhotosForTesting) {
+          // 只有在沒有 Firebase 照片時才呼叫 Google Photos API
           final ref = photoReferences.first;
           await _incrementPhotoRequestCount();
-          print("🖼️ 發送 Place Photo，placeId: $placeId");
-          print("🖼️ Photo mode: ${_disablePhotosForTesting ? 'DISABLED' : 'ENABLED'}");
+          print("🖼️ 發送 Place Photo API: $restaurantName");
           photoUrls = ['https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=$ref&key=$apiKey'];
+          photoUrl = photoUrls.first;
         } else if (_disablePhotosForTesting) {
-          print("🖼️ Photo request skipped (development mode) for $placeId");
+          print("🖼️ Photo request skipped (development mode) for $restaurantName");
         } else if (photoReferences.isEmpty) {
-          print("🖼️ No photo references available for $placeId");
+          print("🖼️ No photo references available for $restaurantName");
         }
-
-        final photoUrl = photoUrls.isNotEmpty
-            ? photoUrls.first
-            : 'https://via.placeholder.com/400x300.png?text=No+Image';
 
         final detailsMapDynamic = {
           'name': item['name'] ?? '',
@@ -1460,6 +1696,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 case 'test_permissions':
                   await _testPermissions();
                   break;
+                case 'firebase_photo_manager':
+                  _showFirebasePhotoManager();
+                  break;
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -1540,6 +1779,17 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ],
                   ),
                 ),
+                // 新增：Firebase 照片管理
+                PopupMenuItem<String>(
+                  value: 'firebase_photo_manager',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.photo_library, color: Colors.indigo),
+                      const SizedBox(width: 8),
+                      const Text('🖼️ Firebase 照片管理'),
+                    ],
+                  ),
+                ),
               ],
               PopupMenuItem(
                 value: 'clear_all_cache',
@@ -1597,6 +1847,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 ),
               ),
               const Divider(height: 1, color: Color(0x11000000)),
+              // 🔍 搜尋功能 UI
+              _buildSearchSection(),
               if (round == 1)
                 Padding(
                   padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -1753,8 +2005,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           // 新增：快取統計顯示
                           _buildApiUsageRow('SQLite 快取', _cacheStats['total_entries'] ?? 0, Colors.cyan, fontSize: 10, numberFontSize: 10),
                           // 🔥 新增：Firebase 照片統計
-                          _buildApiUsageRow('Firebase 餐廳', FirebaseRestaurantService.getPhotoStats()['total_firebase_restaurants'] ?? 0, Colors.deepOrange, fontSize: 10, numberFontSize: 10),
-                          _buildApiUsageRow('Firebase 照片', FirebaseRestaurantService.getPhotoStats()['total_firebase_photos'] ?? 0, Colors.pink, fontSize: 10, numberFontSize: 10),
+                                          _buildApiUsageRow('Firebase 餐廳', FirebaseRestaurantService.getPhotoStats()['total_firebase_restaurants'] ?? 0, Colors.deepOrange, fontSize: 10, numberFontSize: 10),
+                _buildApiUsageRow('Firebase 照片', FirebaseRestaurantService.getPhotoStats()['total_firebase_photos'] ?? 0, Colors.pink, fontSize: 10, numberFontSize: 10),
+                _buildApiUsageRow('本地餐廳資料庫', 268, Colors.teal, fontSize: 10, numberFontSize: 10),
                           if (_cacheStats['oldest_entry'] != null) ...[
                             Text(
                               '最舊資料: ${DateFormat('MM/dd').format(_cacheStats['oldest_entry'])}',
@@ -2037,6 +2290,161 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     );
   }
 
+  // 🔍 搜尋功能 UI 建構方法
+  Widget _buildSearchSection() {
+    return Column(
+      children: [
+        // 搜尋框
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              _debounceTimer?.cancel();
+              _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+                _performSearch(value);
+              });
+            },
+            decoration: InputDecoration(
+              hintText: '搜尋餐廳、特色料理或區域...',
+              hintStyle: TextStyle(color: Colors.grey[600]),
+              prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+              suffixIcon: _searchQuery.isNotEmpty || _selectedArea.isNotEmpty || _selectedSpecialty.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: _clearSearch,
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.grey[50],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.deepPurple.shade300, width: 2),
+              ),
+            ),
+          ),
+        ),
+        // 快速篩選按鈕
+        if (_availableAreas.isNotEmpty || _availableSpecialties.isNotEmpty)
+          Container(
+            height: 36,
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                const SizedBox(width: 10),
+                // 區域篩選
+                if (_availableAreas.isNotEmpty)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip('區域', _selectedArea, _availableAreas, _selectArea),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('特色', _selectedSpecialty, _availableSpecialties, _selectSpecialty),
+                        ],
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 10),
+              ],
+            ),
+          ),
+        // 搜尋結果提示
+        if (_isSearchMode && !_isSearching)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Icon(Icons.search_outlined, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '搜尋結果：${currentRoundList.length} 間餐廳',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                if (_searchQuery.isNotEmpty || _selectedArea.isNotEmpty || _selectedSpecialty.isNotEmpty)
+                  TextButton(
+                    onPressed: _clearSearch,
+                    child: const Text('清除', style: TextStyle(fontSize: 12)),
+                  ),
+              ],
+            ),
+          ),
+        if (_isSearching)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8),
+                Text('搜尋中...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+  
+  Widget _buildFilterChip(String label, String selectedValue, List<String> options, Function(String) onSelect) {
+    return PopupMenuButton<String>(
+      onSelected: onSelect,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selectedValue.isNotEmpty ? Colors.deepPurple : Colors.grey[100],
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selectedValue.isNotEmpty ? Colors.deepPurple : Colors.grey[300]!,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              selectedValue.isNotEmpty ? selectedValue : label,
+              style: TextStyle(
+                fontSize: 12,
+                color: selectedValue.isNotEmpty ? Colors.white : Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              selectedValue.isNotEmpty ? Icons.check : Icons.arrow_drop_down,
+              size: 16,
+              color: selectedValue.isNotEmpty ? Colors.white : Colors.grey[600],
+            ),
+          ],
+        ),
+      ),
+      itemBuilder: (context) => [
+        if (selectedValue.isNotEmpty)
+          const PopupMenuItem<String>(
+            value: '',
+            child: Text('清除篩選'),
+          ),
+        ...options.map((option) => PopupMenuItem<String>(
+          value: option,
+          child: Text(option),
+        )),
+      ],
+    );
+  }
+
   Widget _buildRound3GridView() {
     return Stack(
       children: [
@@ -2310,6 +2718,14 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               final String typeText = classifyRestaurant(typesList, restaurant);
               final String ratingText = restaurant['rating']?.isNotEmpty == true ? restaurant['rating']! : '無';
               final String openStatus = getOpenStatus(restaurant);
+              
+              // 🔥 新增：餐廳來源和照片來源資訊
+              final String source = restaurant['source']?.toString() ?? 'google';
+              final String photoSource = restaurant['photo_source']?.toString() ?? 'google';
+              final bool hasFirebasePhotos = restaurant['has_firebase_photos'] == true;
+              final String specialty = restaurant['specialty']?.toString() ?? '';
+              final String area = restaurant['area']?.toString() ?? '';
+              
               // 多圖輪播
               List<String> photoUrls = [];
               if (restaurant['photo_urls'] != null) {
@@ -2423,6 +2839,96 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                                   style: const TextStyle(fontSize: 15, color: Colors.grey),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
+                                ),
+                                // 🔥 新增：顯示特色和來源標籤
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (specialty.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                                        ),
+                                        child: Text(
+                                          specialty,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.orange,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    if (area.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                                        ),
+                                        child: Text(
+                                          area,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    if (source == 'local_database')
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.teal.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.teal.withOpacity(0.3)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Icon(Icons.local_dining, size: 12, color: Colors.teal),
+                                            SizedBox(width: 2),
+                                            Text(
+                                              '本地資料庫',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.teal,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (hasFirebasePhotos)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Icon(Icons.photo_library, size: 12, color: Colors.green),
+                                            SizedBox(width: 2),
+                                            Text(
+                                              'Firebase 照片',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -2951,6 +3457,280 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         _titleTapCount = 0;
       });
     }
+  }
+
+  // 新增：Firebase 照片管理
+  void _showFirebasePhotoManager() {
+    final restaurantNames = FirebaseRestaurantService.getAllFirebaseRestaurantNames();
+    final stats = FirebaseRestaurantService.getPhotoStats();
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.maxFinite,
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              // 標題列
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.photo_library, color: Colors.indigo),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '🖼️ Firebase 照片管理',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '共 ${stats['total_firebase_restaurants']} 家餐廳，${stats['total_firebase_photos']} 張照片',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              // 餐廳清單
+              Expanded(
+                child: ListView.builder(
+                  itemCount: restaurantNames.length,
+                  itemBuilder: (context, index) {
+                    final restaurantName = restaurantNames[index];
+                    final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName);
+                    
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: _buildImageWidget(
+                            photos.isNotEmpty ? photos.first : '',
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(
+                          restaurantName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${photos.length} 張照片',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showFirebasePhotoDetail(restaurantName, photos);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 新增：顯示單一餐廳的 Firebase 照片詳情
+  void _showFirebasePhotoDetail(String restaurantName, List<String> photos) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.maxFinite,
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              // 標題列
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showFirebasePhotoManager(); // 返回主清單
+                      },
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            restaurantName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '${photos.length} 張 Firebase 照片',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              // 照片網格
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: photos.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        _showFullScreenPhoto(photos[index], restaurantName);
+                      },
+                      child: Hero(
+                        tag: photos[index],
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: _buildImageWidget(
+                            photos[index],
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 新增：顯示全屏照片
+  void _showFullScreenPhoto(String photoUrl, String restaurantName) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Center(
+              child: Hero(
+                tag: photoUrl,
+                child: InteractiveViewer(
+                  child: _buildImageWidget(
+                    photoUrl,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              left: 16,
+              child: CircleAvatar(
+                backgroundColor: Colors.black54,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      restaurantName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Firebase Storage',
+                      style: TextStyle(
+                        color: Colors.grey[300],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // 新增：通用圖片載入 Widget

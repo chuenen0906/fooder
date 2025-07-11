@@ -1474,5 +1474,143 @@
     "specialty": "鹹粥",
     "area": "中西區",
     "description": "北區老店鹹粥好味"
+  },
+  {
+    "name": "葉記浮水虱目魚羹",
+    "specialty": "虱目魚羹",
+    "area": "北區",
+    "description": "文賢路24小時虱目羹"
+  },
+  {
+    "name": "汕頭沙茶意麵",
+    "specialty": "沙茶意麵",
+    "area": "北區",
+    "description": "平價沙茶意麵餐館"
+  },
+  {
+    "name": "小北平餡餅粥",
+    "specialty": "餡餅／粥品",
+    "area": "北區",
+    "description": "傳統餡餅／粥品"
+  },
+  {
+    "name": "老李螺肉大王",
+    "specialty": "螺肉／熱炒",
+    "area": "北區",
+    "description": "炒螺肉／炒牛肉熱門攤位"
+  },
+  {
+    "name": "紅樹林海鮮碳烤",
+    "specialty": "海鮮碳烤",
+    "area": "北區",
+    "description": "碳烤海鮮攤，好評推薦"
+  },
+  {
+    "name": "Guyra Burger 蓋拉漢堡",
+    "specialty": "手打漢堡",
+    "area": "北區",
+    "description": "澳洲風手打漢堡"
+  },
+  {
+    "name": "Dishege 義式冰淇淋",
+    "specialty": "義式冰淇淋",
+    "area": "北區",
+    "description": "東豐路義冰專賣"
+  },
+  {
+    "name": "朵菈義大利麵",
+    "specialty": "義大利麵",
+    "area": "北區",
+    "description": "平價義麵質感好"
+  },
+  {
+    "name": "瑞香手工包子",
+    "specialty": "手工包子／饅頭",
+    "area": "北區",
+    "description": "藏身巷弄每日現包限量，皮Q餡飽滿，香菇蛋黃肉包與干貝包人氣招牌，鹹甜口味豐富，出爐即秒殺"
+  },
+  {
+    "name": "福榮小吃（阿瑞意麵）",
+    "specialty": "意麵／餛飩",
+    "area": "中西區",
+    "description": "開業近百年老店，招牌意麵與餛飩湯必點"
+  },
+  {
+    "name": "阿江鱔魚意麵",
+    "specialty": "鱔魚意麵",
+    "area": "中西區",
+    "description": "黑胡椒香微辣鱔魚意麵，味道濃郁"
+  },
+  {
+    "name": "無名米糕（炮店米糕）",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "巷弄隱藏人氣米糕，濕黏米香搭半熟蛋"
+  },
+  {
+    "name": "here Kyoto",
+    "specialty": "手沖咖啡／可麗露",
+    "area": "中西區",
+    "description": "老宅咖啡店，冠軍級咖啡與可麗露必嚐"
+  },
+  {
+    "name": "栮咖啡",
+    "specialty": "手沖咖啡",
+    "area": "中西區",
+    "description": "老厝小花地磚空間，悠閒手沖咖啡"
+  },
+  {
+    "name": "餓八來秋（海南雞飯）",
+    "specialty": "海南雞飯",
+    "area": "中西區",
+    "description": "文青小店，清爽海南雞飯獨具風味"
+  },
+  {
+    "name": "陳擔仔麵",
+    "specialty": "擔仔麵",
+    "area": "中西區",
+    "description": "古早味擔仔麵，傳統攤型＋老闆親切"
+  },
+  {
+    "name": "入街貨櫃麻辣燙",
+    "specialty": "麻辣燙／鴨血臭豆腐",
+    "area": "中西區",
+    "description": "貨櫃屋風格，麻辣鴨血臭豆腐湯頭佳"
+  },
+  {
+    "name": "許來福豆簽羹",
+    "specialty": "豆簽羹",
+    "area": "中西區",
+    "description": "運河旁古早味，粉條蚵仔絲瓜羹，寵物友善"
+  },
+  {
+    "name": "建國蝦仁肉圓",
+    "specialty": "蝦仁肉圓",
+    "area": "中西區",
+    "description": "脆皮肉圓包蝦仁，雞蛋湯／米糕也推薦"
+  },
+  {
+    "name": "浮水虱目魚羹（阿鳳）",
+    "specialty": "虱目魚羹",
+    "area": "中西區",
+    "description": "第一代傳承，魚羹塊浮於湯面得名"
+  },
+  {
+    "name": "武廟肉圓",
+    "specialty": "肉圓",
+    "area": "中西區",
+    "description": "赤崁、武廟附近老字號肉圓小吃"
+  },
+  {
+    "name": "黃記鱔魚意麵",
+    "specialty": "鱔魚意麵",
+    "area": "中西區",
+    "description": "鱔魚意麵老店，香氣十足"
+  },
+  {
+    "name": "大和陽春麵",
+    "specialty": "陽春麵／湯麵",
+    "area": "北區",
+    "description": "傳統麵店，評價4.3星，價格實惠，提供內用外帶服務"
   }
 ]

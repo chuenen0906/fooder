@@ -577,6 +577,30 @@ class FirebaseRestaurantService {
     ],
     "玉婆壽司屋": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%8E%89%E5%A9%86%E5%A3%BD%E5%8F%B8%E5%B1%8B/%E7%8E%89%E5%A9%86%E5%A3%BD%E5%8F%B8%E5%B1%8B.jpg"
+    ],
+    "AIC冰淇淋": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/AIC%E5%86%B0%E6%B7%87%E6%B7%8B/AIC%E5%86%B0%E6%B7%87%E6%B7%8B.jpg"
+    ],
+    "葉家豬血湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%91%89%E5%AE%B6%E8%B1%AC%E8%A1%80%E6%B9%AF/%E8%91%89%E5%AE%B6%E8%B1%AC%E8%A1%80%E6%B9%AF.jpg"
+    ],
+    "老街紅燒肉": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%80%81%E8%A1%97%E7%B4%85%E7%87%92%E8%82%89/%E8%80%81%E8%A1%97%E7%B4%85%E7%87%92%E8%82%89.jpg"
+    ],
+    "甄品豬腳": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%94%84%E5%93%81%E8%B1%AC%E8%85%B3/%E7%94%84%E5%93%81%E8%B1%AC%E8%85%B3.jpg"
+    ],
+    "王家香腸熟肉": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%8E%8B%E5%AE%B6%E9%A6%99%E8%85%B8%E7%86%9F%E8%82%89/%E7%8E%8B%E5%AE%B6%E9%A6%99%E8%85%B8%E7%86%9F%E8%82%89.jpg"
+    ],
+    "吳媽媽肉圓": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%90%B3%E5%AA%BD%E5%AA%BD%E8%82%89%E5%9C%93/%E5%90%B3%E5%AA%BD%E5%AA%BD%E8%82%89%E5%9C%93.jpg"
+    ],
+    "手工水晶餃": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%89%8B%E5%B7%A5%E6%B0%B4%E6%99%B6%E9%A4%83/%E6%89%8B%E5%B7%A5%E6%B0%B4%E6%99%B6%E9%A4%83.jpg"
+    ],
+    "鴨母寮市場無名剉冰": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%A8%E6%AF%8D%E5%AF%AE%E5%B8%82%E5%A0%B4%E7%84%A1%E5%90%8D%E5%89%89%E5%86%B0/%E9%B4%A8%E6%AF%8D%E5%AF%AE%E5%B8%82%E5%A0%B4%E7%84%A1%E5%90%8D%E5%89%89%E5%86%B0.jpg"
     ]
   };
 

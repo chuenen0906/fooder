@@ -77,7 +77,8 @@ def main():
         else:
             # 補充缺少的欄位並推斷區域
             address = restaurant.get('address', '')
-            area = determine_area(address)
+            # 支援新格式的 district 欄位，如果沒有則從地址推斷
+            area = restaurant.get('district', restaurant.get('area', determine_area(address)))
             formatted_restaurant = {
                 "name": restaurant_name,
                 "specialty": restaurant.get('specialty', ''),
