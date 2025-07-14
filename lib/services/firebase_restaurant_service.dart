@@ -603,7 +603,37 @@ class FirebaseRestaurantService {
     ],
     "鴨母寮市場無名剉冰": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%A8%E6%AF%8D%E5%AF%AE%E5%B8%82%E5%A0%B4%E7%84%A1%E5%90%8D%E5%89%89%E5%86%B0/%E9%B4%A8%E6%AF%8D%E5%AF%AE%E5%B8%82%E5%A0%B4%E7%84%A1%E5%90%8D%E5%89%89%E5%86%B0.jpg"
-    ]
+    ],
+    "香味麵食館": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%A6%99%E5%91%B3%E9%BA%B5%E9%A3%9F%E9%A4%A8/%E9%A6%99%E5%91%B3%E9%BA%B5%E9%A3%9F%E9%A4%A8.jpg"
+    ],
+    "阿婆肉粽": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A9%86%E8%82%89%E7%B2%BD/%E9%98%BF%E5%A9%86%E8%82%89%E7%B2%BD.jpg"
+    ],
+    "下大道滷味": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%8B%E5%A4%A7%E9%81%93%E6%BB%B7%E5%91%B3/%E4%B8%8B%E5%A4%A7%E9%81%93%E6%BB%B7%E5%91%B3.jpg"
+    ],
+    "圓仔伯豆花": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9C%93%E4%BB%94%E4%BC%AF%E8%B1%86%E8%8A%B1/%E5%9C%93%E4%BB%94%E4%BC%AF%E8%B1%86%E8%8A%B1.jpg"
+    ],
+    "大億鵝肉": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%A4%A7%E5%84%84%E9%B5%9D%E8%82%89/%E5%A4%A7%E5%84%84%E9%B5%9D%E8%82%89.jpg"
+    ],
+    "金福氣魯味": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%87%91%E7%A6%8F%E6%B0%A3%E9%AD%AF%E5%91%B3/%E9%87%91%E7%A6%8F%E6%B0%A3%E9%AD%AF%E5%91%B3.jpg"
+    ],
+    "城隍街鹹粥": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9F%8E%E9%9A%8D%E8%A1%97%E9%B9%B9%E7%B2%A5/%E5%9F%8E%E9%9A%8D%E8%A1%97%E9%B9%B9%E7%B2%A5.jpg"
+    ],
+    "米街雞蛋糕": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%B1%B3%E8%A1%97%E9%9B%9E%E8%9B%8B%E7%B3%95/%E7%B1%B3%E8%A1%97%E9%9B%9E%E8%9B%8B%E7%B3%95.jpg"
+    ],
+    "鴻品牛肉湯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+    ],
+    "真味肉燥飯": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%9C%9F%E5%91%B3%E8%82%89%E7%87%A5%E9%A3%AF/%E7%9C%9F%E5%91%B3%E8%82%89%E7%87%A5%E9%A3%AF.jpg"
+    ],
   };
 
   /// 根據餐廳名稱獲取 Firebase 上的照片 URL（最多 5 張）

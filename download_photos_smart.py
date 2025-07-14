@@ -11,6 +11,8 @@ from google_images_search import GoogleImagesSearch
 import requests
 import sys
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 # 從環境變數讀取 API Key，避免硬編碼
 API_KEY = os.getenv('GOOGLE_API_KEY')
