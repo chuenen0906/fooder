@@ -23,10 +23,12 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A0%82%E9%B9%B9%E7%B2%A5/atang_2.jpg"
     ],
     "邱家小卷米粉": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89_2.jpg"
     ],
     "炸雞洋行": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%82%B8%E9%9B%9E%E6%B4%8B%E8%A1%8C/%E7%82%B8%E9%9B%9E%E6%B4%8B%E8%A1%8C.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%82%B8%E9%9B%9E%E6%B4%8B%E8%A1%8C/%E7%82%B8%E9%9B%9E%E6%B4%8B%E8%A1%8C_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%82%B8%E9%9B%9E%E6%B4%8B%E8%A1%8C/%E7%82%B8%E9%9B%9E%E6%B4%8B%E8%A1%8C_2.jpg"
     ],
     "阿伯炭烤黑輪甜不辣": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E4%BC%AF%E7%82%AD%E7%83%A4%E9%BB%91%E8%BC%AA%E7%94%9C%E4%B8%8D%E8%BE%A3/%E9%98%BF%E4%BC%AF%E7%82%AD%E7%83%A4%E9%BB%91%E8%BC%AA%E7%94%9C%E4%B8%8D%E8%BE%A3.jpg"

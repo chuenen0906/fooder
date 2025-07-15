@@ -1,102 +1,10 @@
 [
   {
-    "name": "香味麵食館",
-    "specialty": "乾麵",
-    "area": "中西區",
-    "description": "銅板麵食份量大",
+    "name": "邱家小卷米粉",
     "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%A6%99%E5%91%B3%E9%BA%B5%E9%A3%9F%E9%A4%A8/%E9%A6%99%E5%91%B3%E9%BA%B5%E9%A3%9F%E9%A4%A8.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89/%E9%82%B1%E5%AE%B6%E5%B0%8F%E5%8D%B7%E7%B1%B3%E7%B2%89_2.jpg"
     ],
-    "uploaded_at": "2025-07-14T09:45:36.781036"
-  },
-  {
-    "name": "阿婆肉粽",
-    "specialty": "肉粽",
-    "area": "中西區",
-    "description": "甜辣醬加花生粉是精髓",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A9%86%E8%82%89%E7%B2%BD/%E9%98%BF%E5%A9%86%E8%82%89%E7%B2%BD.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:39.677165"
-  },
-  {
-    "name": "下大道滷味",
-    "specialty": "滷味",
-    "area": "中西區",
-    "description": "冷滷熱滷皆可選擇",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%B8%8B%E5%A4%A7%E9%81%93%E6%BB%B7%E5%91%B3/%E4%B8%8B%E5%A4%A7%E9%81%93%E6%BB%B7%E5%91%B3.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:42.443522"
-  },
-  {
-    "name": "圓仔伯豆花",
-    "specialty": "豆花",
-    "area": "中西區",
-    "description": "手工豆花配料多樣",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9C%93%E4%BB%94%E4%BC%AF%E8%B1%86%E8%8A%B1/%E5%9C%93%E4%BB%94%E4%BC%AF%E8%B1%86%E8%8A%B1.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:45.309488"
-  },
-  {
-    "name": "大億鵝肉",
-    "specialty": "鵝肉飯",
-    "area": "中西區",
-    "description": "鵝肉厚切多汁",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%A4%A7%E5%84%84%E9%B5%9D%E8%82%89/%E5%A4%A7%E5%84%84%E9%B5%9D%E8%82%89.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:48.141284"
-  },
-  {
-    "name": "金福氣魯味",
-    "specialty": "滷味",
-    "area": "中西區",
-    "description": "乾淨衛生的現滷滷味",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%87%91%E7%A6%8F%E6%B0%A3%E9%AD%AF%E5%91%B3/%E9%87%91%E7%A6%8F%E6%B0%A3%E9%AD%AF%E5%91%B3.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:51.043511"
-  },
-  {
-    "name": "城隍街鹹粥",
-    "specialty": "鹹粥",
-    "area": "中西區",
-    "description": "土魠魚酥配鹹粥很搭",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%9F%8E%E9%9A%8D%E8%A1%97%E9%B9%B9%E7%B2%A5/%E5%9F%8E%E9%9A%8D%E8%A1%97%E9%B9%B9%E7%B2%A5.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:53.910641"
-  },
-  {
-    "name": "米街雞蛋糕",
-    "specialty": "雞蛋糕",
-    "area": "中西區",
-    "description": "每日手作限量販售",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%B1%B3%E8%A1%97%E9%9B%9E%E8%9B%8B%E7%B3%95/%E7%B1%B3%E8%A1%97%E9%9B%9E%E8%9B%8B%E7%B3%95.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:57.290193"
-  },
-  {
-    "name": "鴻品牛肉湯",
-    "specialty": "牛肉湯",
-    "area": "中西區",
-    "description": "湯頭濃郁帶點胡椒香",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:45:58.928750"
-  },
-  {
-    "name": "真味肉燥飯",
-    "specialty": "魯肉飯",
-    "area": "中西區",
-    "description": "傳統肉燥香氣撲鼻",
-    "photos": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%9C%9F%E5%91%B3%E8%82%89%E7%87%A5%E9%A3%AF/%E7%9C%9F%E5%91%B3%E8%82%89%E7%87%A5%E9%A3%AF.jpg"
-    ],
-    "uploaded_at": "2025-07-14T09:46:00.570736"
+    "uploaded_at": "2025-07-15T10:29:58.119231"
   }
 ]

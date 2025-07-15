@@ -23,7 +23,7 @@ def parse_old_mapping(content, start_marker, end_marker):
 
 def main():
     service_file = 'lib/services/firebase_restaurant_service.dart'
-    uploaded_file = 'uploaded_restaurants_smart.json'
+    uploaded_file = 'data/uploaded_restaurants_smart.json'
     start_marker = '  static const Map<String, List<String>> _restaurantPhotoUrls = {'
     end_marker = '  };'
 
