@@ -52,7 +52,7 @@ class NearbyFoodSwipePage extends StatefulWidget {
   State<NearbyFoodSwipePage> createState() => _NearbyFoodSwipePageState();
 }
 
-class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin {
+class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   final String apiKey = dotenv.env['GOOGLE_API_KEY'] ?? ''; // 已更新 API key
   
   // 新增：用戶 ID 相關變數
@@ -169,6 +169,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   
   // 新增：可調整的餐廳搜尋數量
   int _targetRestaurantCount = 20; // 使用者模式：每次搜尋 20 家
+  
+  // 新增：滾動位置保存
+  final ScrollController _gridScrollController = ScrollController();
+  double _savedScrollPosition = 0.0;
   
   // 🔍 新增：搜尋功能相關變數
   final TextEditingController _searchController = TextEditingController();
@@ -341,7 +345,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     _loadPlaceDetailsCache(); // 讀取 Place Details 快取
     _loadPhotoUrlCache(); // 讀取照片 URL 快取
     _initializeSearchFilters(); // 初始化搜尋篩選
+    
+
   }
+
+  @override
+  bool get wantKeepAlive => true; // 保持頁面狀態
 
   @override
   void dispose() {
@@ -349,6 +358,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     _titleTapTimer?.cancel();
     _searchController.dispose();
     _debounceTimer?.cancel();
+    _gridScrollController.dispose(); // 清理滾動控制器
     super.dispose();
   }
   
@@ -1783,127 +1793,127 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
         ],
       ),
       body: Stack(
-        children: [
-          Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.deepPurple, size: 14),
-                    Expanded(
-                      child: SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          activeTrackColor: Colors.deepPurple,
-                          inactiveTrackColor: Colors.deepPurple.shade100,
-                          thumbColor: Colors.deepPurple,
-                          overlayColor: Colors.deepPurple.withOpacity(0.2),
-                          trackHeight: 4,
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.deepPurple, size: 14),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              activeTrackColor: Colors.deepPurple,
+                              inactiveTrackColor: Colors.deepPurple.shade100,
+                              thumbColor: Colors.deepPurple,
+                              overlayColor: Colors.deepPurple.withOpacity(0.2),
+                              trackHeight: 4,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+                            ),
+                            child: Slider(
+                              min: 1,
+                              max: 10,
+                              divisions: 9,
+                              value: searchRadius,
+                              onChanged: (value) => setState(() => searchRadius = value),
+                              onChangeEnd: (value) {
+                                fetchAllRestaurants(
+                                  radiusKm: value,
+                                  onlyShowOpen: true,
+                                );
+                              },
+                            ),
+                          ),
                         ),
-                        child: Slider(
-                          min: 1,
-                          max: 10,
-                          divisions: 9,
-                          value: searchRadius,
-                          onChanged: (value) => setState(() => searchRadius = value),
-                          onChangeEnd: (value) {
-                            fetchAllRestaurants(
-                              radiusKm: value,
-                              onlyShowOpen: true,
-                            );
-                          },
+                        Text(
+                          "${searchRadius.toStringAsFixed(1).replaceAll('.0', '')} km",
+                          style: const TextStyle(fontSize: 11, color: Colors.deepPurple, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0x11000000)),
+                  // 🔍 搜尋功能 UI
+                  _buildSearchSection(),
+                  if (round == 1)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            '🌀 $_round1Title',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.deepPurple,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    Text(
-                      "${searchRadius.toStringAsFixed(1).replaceAll('.0', '')} km",
-                      style: const TextStyle(fontSize: 11, color: Colors.deepPurple, fontWeight: FontWeight.w500),
+                  if (round == 2)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            '🔍 $_round2Title',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
+                  if (round == 3)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: const Text(
+                            '🎯 抉擇吧',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: currentRoundList.isEmpty
+                        ? Center(child: isLoading ? CircularProgressIndicator() : Text(_loadingText))
+                        : round == 3 
+                            ? _buildRound3GridView()
+                            : _buildSwipeCardView(),
+                  ),
+                ],
               ),
-              const Divider(height: 1, color: Color(0x11000000)),
-              // 🔍 搜尋功能 UI
-              _buildSearchSection(),
-              if (round == 1)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 8),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
-                      ),
-                      child: Text(
-                        '🌀 $_round1Title',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.deepPurple,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (round == 2)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 8),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                      ),
-                      child: Text(
-                        '🔍 $_round2Title',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              if (round == 3)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 8),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.red.withOpacity(0.3)),
-                      ),
-                      child: const Text(
-                        '🎯 抉擇吧',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: currentRoundList.isEmpty
-                    ? Center(child: isLoading ? CircularProgressIndicator() : Text(_loadingText))
-                    : round == 3 
-                        ? _buildRound3GridView()
-                        : _buildSwipeCardView(),
-              ),
-            ],
-          ),
           if (isLoading)
             Positioned.fill(
               child: Container(
@@ -2009,8 +2019,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 ),
               ),
             ),
-        ],
-      ),
+          ],
+        ),
     );
   }
 
@@ -2428,7 +2438,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: GridView.builder(
+                    child: GridView.builder(
+            controller: _gridScrollController,
+            key: const PageStorageKey('restaurant_grid'),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 0.75,
@@ -2474,6 +2486,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
                   onTap: () {
+                    // 保存當前滾動位置
+                    if (_gridScrollController.hasClients) {
+                      _savedScrollPosition = _gridScrollController.position.pixels;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -2483,7 +2499,18 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           getOpenStatus: getOpenStatus,
                         ),
                       ),
-                    );
+                    ).then((_) {
+                      // 返回時恢復滾動位置
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_gridScrollController.hasClients) {
+                          _gridScrollController.animateTo(
+                            _savedScrollPosition,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      });
+                    });
                   },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -3336,125 +3363,161 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   void _showFirebasePhotoManager() {
     final restaurantNames = FirebaseRestaurantService.getAllFirebaseRestaurantNames();
     final stats = FirebaseRestaurantService.getPhotoStats();
-    
+    String firebasePhotoSearchQuery = '';
+    List<String> filteredRestaurantNames = List.from(restaurantNames);
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        child: Container(
-          width: double.maxFinite,
-          height: MediaQuery.of(context).size.height * 0.8,
-          child: Column(
-            children: [
-              // 標題列
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            width: double.maxFinite,
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Column(
+              children: [
+                // 標題列
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.shade50,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.photo_library, color: Colors.indigo),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🖼️ Firebase 照片管理',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '共 ${stats['total_firebase_restaurants']} 家餐廳，${stats['total_firebase_photos']} 張照片（最多 5 張/家）',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.photo_library, color: Colors.indigo),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '🖼️ Firebase 照片管理',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '共 ${stats['total_firebase_restaurants']} 家餐廳，${stats['total_firebase_photos']} 張照片（最多 5 張/家）',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
+                // 新增：搜尋框
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: '搜尋餐廳名稱...',
+                      suffixIcon: firebasePhotoSearchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear),
+                              onPressed: () {
+                                setState(() {
+                                  firebasePhotoSearchQuery = '';
+                                  filteredRestaurantNames = List.from(restaurantNames);
+                                });
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                    onChanged: (value) {
+                      setState(() {
+                        firebasePhotoSearchQuery = value;
+                        filteredRestaurantNames = restaurantNames
+                            .where((name) => name.contains(value) || name.toLowerCase().contains(value.toLowerCase()))
+                            .toList();
+                      });
+                    },
+                  ),
                 ),
-              ),
-              // 餐廳清單
-              Expanded(
-                child: ListView.builder(
-                  itemCount: restaurantNames.length,
-                  itemBuilder: (context, index) {
-                    final restaurantName = restaurantNames[index];
-                    final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName, maxPhotos: 5);
-                    
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: _buildImageWidget(
-                            photos.isNotEmpty ? photos.first : '',
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        title: Text(
-                          restaurantName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${photos.length} 張照片',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
+                // 餐廳清單
+                Expanded(
+                  child: filteredRestaurantNames.isEmpty
+                      ? Center(child: Text('查無符合的餐廳'))
+                      : ListView.builder(
+                          itemCount: filteredRestaurantNames.length,
+                          itemBuilder: (context, index) {
+                            final restaurantName = filteredRestaurantNames[index];
+                            final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName, maxPhotos: 5);
+                            return Card(
+                              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: ListTile(
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: _buildImageWidget(
+                                    photos.isNotEmpty ? photos.first : '',
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                title: Text(
+                                  restaurantName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${photos.length} 張照片',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
                                 trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (photos.length > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: photos.length >= 5 ? Colors.green : Colors.orange,
-                  borderRadius: BorderRadius.circular(10),
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (photos.length > 0)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: photos.length >= 5 ? Colors.green : Colors.orange,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          photos.length >= 5 ? '滿' : '${photos.length}/5',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.arrow_forward_ios, size: 16),
+                                  ],
+                                ),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _showFirebasePhotoDetail(restaurantName, photos);
+                                },
+                              ),
+                            );
+                          },
+                        ),
                 ),
-                child: Text(
-                  photos.length >= 5 ? '滿' : '${photos.length}/5',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios, size: 16),
-          ],
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          _showFirebasePhotoDetail(restaurantName, photos);
-        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -3766,6 +3829,12 @@ class RestaurantDetailPage extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.navigation, color: Colors.deepPurple),

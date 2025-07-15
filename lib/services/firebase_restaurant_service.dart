@@ -37,13 +37,16 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%98%8E%E8%B1%AC%E5%BF%83/%E9%98%BF%E6%98%8E%E8%B1%AC%E5%BF%83.jpg"
     ],
     "阿松割包": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%9D%BE%E5%89%B2%E5%8C%85/%E9%98%BF%E6%9D%BE%E5%89%B2%E5%8C%85.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%9D%BE%E5%89%B2%E5%8C%85/%E9%98%BF%E6%9D%BE%E5%89%B2%E5%8C%85_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E6%9D%BE%E5%89%B2%E5%8C%85/%E9%98%BF%E6%9D%BE%E5%89%B2%E5%8C%85_2.jpg"
     ],
     "修安扁擔豆花": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%BF%AE%E5%AE%89%E6%89%81%E6%93%94%E8%B1%86%E8%8A%B1/%E4%BF%AE%E5%AE%89%E6%89%81%E6%93%94%E8%B1%86%E8%8A%B1.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%BF%AE%E5%AE%89%E6%89%81%E6%93%94%E8%B1%86%E8%8A%B1/%E4%BF%AE%E5%AE%89%E6%89%81%E6%93%94%E8%B1%86%E8%8A%B1_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E4%BF%AE%E5%AE%89%E6%89%81%E6%93%94%E8%B1%86%E8%8A%B1/%E4%BF%AE%E5%AE%89%E6%89%81%E6%93%94%E8%B1%86%E8%8A%B1_2.jpg"
     ],
     "蜷尾家甘味處": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95.png"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95_2.jpg"
     ],
     "江水號": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B1%9F%E6%B0%B4%E8%99%9F/%E6%B1%9F%E6%B0%B4%E8%99%9F.jpg"
@@ -127,7 +130,7 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0.jpg"
     ],
     "懷舊小棧杏仁豆腐冰": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%87%B7%E8%88%8A%E5%B0%8F%E6%A3%A7%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0/%E6%87%B7%E8%88%8A%E5%B0%8F%E6%A3%A7%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%87%B7%E8%88%8A%E5%B0%8F%E6%A3%A7%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0/%E6%87%B7%E8%88%8A%E5%B0%8F%E6%A3%A7%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0_1.jpg"
     ],
     "街貓咖啡店": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%A1%97%E8%B2%93%E5%92%96%E5%95%A1%E5%BA%97/%E8%A1%97%E8%B2%93%E5%92%96%E5%95%A1%E5%BA%97.jpg"
