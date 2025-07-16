@@ -49,19 +49,23 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95/%E8%9C%B7%E5%B0%BE%E5%AE%B6%E7%94%98%E5%91%B3%E8%99%95_2.jpg"
     ],
     "江水號": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B1%9F%E6%B0%B4%E8%99%9F/%E6%B1%9F%E6%B0%B4%E8%99%9F.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B1%9F%E6%B0%B4%E8%99%9F/%E6%B1%9F%E6%B0%B4%E8%99%9F_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%B1%9F%E6%B0%B4%E8%99%9F/%E6%B1%9F%E6%B0%B4%E8%99%9F_2.jpg"
     ],
     "鴨米脆皮薯條": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%A8%E7%B1%B3%E8%84%86%E7%9A%AE%E8%96%AF%E6%A2%9D/%E9%B4%A8%E7%B1%B3%E8%84%86%E7%9A%AE%E8%96%AF%E6%A2%9D.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%A8%E7%B1%B3%E8%84%86%E7%9A%AE%E8%96%AF%E6%A2%9D/%E9%B4%A8%E7%B1%B3%E8%84%86%E7%9A%AE%E8%96%AF%E6%A2%9D_1.jpg"
     ],
     "林家白糖粿": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%9E%97%E5%AE%B6%E7%99%BD%E7%B3%96%E7%B2%BF/%E6%9E%97%E5%AE%B6%E7%99%BD%E7%B3%96%E7%B2%BF.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%9E%97%E5%AE%B6%E7%99%BD%E7%B3%96%E7%B2%BF/%E6%9E%97%E5%AE%B6%E7%99%BD%E7%B3%96%E7%B2%BF_1.jpg"
     ],
     "阿婆魯麵": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A9%86%E9%AD%AF%E9%BA%B5/%E9%98%BF%E5%A9%86%E9%AD%AF%E9%BA%B5.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A9%86%E9%AD%AF%E9%BA%B5/%E9%98%BF%E5%A9%86%E9%AD%AF%E9%BA%B5_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%A9%86%E9%AD%AF%E9%BA%B5/%E9%98%BF%E5%A9%86%E9%AD%AF%E9%BA%B5_2.jpg"
     ],
     "勝利早點": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E_2.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E/%E5%8B%9D%E5%88%A9%E6%97%A9%E9%BB%9E_3.jpg"
     ],
     "廖記老牌鱔魚麵": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E5%BB%96%E8%A8%98%E8%80%81%E7%89%8C%E9%B1%94%E9%AD%9A%E9%BA%B5/%E5%BB%96%E8%A8%98%E8%80%81%E7%89%8C%E9%B1%94%E9%AD%9A%E9%BA%B5.jpg"
