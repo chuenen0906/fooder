@@ -174,6 +174,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   final ScrollController _gridScrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   
+  // 新增：Firebase 照片管理滾動位置保存
+  double _firebasePhotoManagerScrollPosition = 0.0;
+  ScrollController? _firebasePhotoManagerScrollController;
+  
   // 🔍 新增：搜尋功能相關變數
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -359,6 +363,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     _searchController.dispose();
     _debounceTimer?.cancel();
     _gridScrollController.dispose(); // 清理滾動控制器
+    _firebasePhotoManagerScrollController?.dispose(); // 清理 Firebase 照片管理滾動控制器
     super.dispose();
   }
   
@@ -3365,6 +3370,12 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     final stats = FirebaseRestaurantService.getPhotoStats();
     String firebasePhotoSearchQuery = '';
     List<String> filteredRestaurantNames = List.from(restaurantNames);
+    
+    // 創建滾動控制器
+    _firebasePhotoManagerScrollController = ScrollController(
+      initialScrollOffset: _firebasePhotoManagerScrollPosition,
+    );
+    
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -3412,7 +3423,13 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          // 保存滾動位置
+                          if (_firebasePhotoManagerScrollController?.hasClients == true) {
+                            _firebasePhotoManagerScrollPosition = _firebasePhotoManagerScrollController!.position.pixels;
+                          }
+                          Navigator.pop(context);
+                        },
                       ),
                     ],
                   ),
@@ -3454,6 +3471,8 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                   child: filteredRestaurantNames.isEmpty
                       ? Center(child: Text('查無符合的餐廳'))
                       : ListView.builder(
+                          controller: _firebasePhotoManagerScrollController,
+                          key: const PageStorageKey('firebase_photo_manager_list'),
                           itemCount: filteredRestaurantNames.length,
                           itemBuilder: (context, index) {
                             final restaurantName = filteredRestaurantNames[index];
@@ -3508,6 +3527,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                                   ],
                                 ),
                                 onTap: () {
+                                  // 保存滾動位置
+                                  if (_firebasePhotoManagerScrollController?.hasClients == true) {
+                                    _firebasePhotoManagerScrollPosition = _firebasePhotoManagerScrollController!.position.pixels;
+                                  }
                                   Navigator.pop(context);
                                   _showFirebasePhotoDetail(restaurantName, photos);
                                 },
@@ -3551,7 +3574,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () {
                         Navigator.pop(context);
-                        _showFirebasePhotoManager(); // 返回主清單
+                        // 延遲重新顯示主清單，確保滾動位置被正確恢復
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          _showFirebasePhotoManager();
+                        });
                       },
                     ),
                     Expanded(
