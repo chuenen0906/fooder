@@ -86,7 +86,7 @@ class RestaurantSyncManagerV2:
         if not self.sheet:
             return False
         
-        headers = ["編號", "店家名稱", "區域", "特色料理", "描述", "同步時間", "狀態"]
+        headers = ["編號", "店家名稱", "區域", "特色料理", "描述", "照片數量", "同步時間", "狀態"]
         
         try:
             # 檢查是否已有資料
@@ -141,12 +141,16 @@ class RestaurantSyncManagerV2:
         # 準備批次資料
         batch_data = []
         for i, restaurant in enumerate(restaurants, 1):
+            photo_count = 0
+            if isinstance(restaurant.get("photos"), list):
+                photo_count = len(restaurant["photos"])
             row = [
                 i,  # 編號
                 restaurant.get("name", ""),
                 restaurant.get("area", ""),
                 restaurant.get("specialty", ""),
                 restaurant.get("description", ""),
+                photo_count,
                 current_time,
                 "已同步"
             ]
@@ -175,74 +179,119 @@ class RestaurantSyncManagerV2:
 
 def main():
     """主程式"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="台南餐廳資料同步到 Google Sheets")
+    parser.add_argument("--credentials", "-c", default="credentials.json", 
+                       help="認證檔案路徑 (預設: credentials.json)")
+    parser.add_argument("--url", "-u", help="現有 Google Sheets URL")
+    parser.add_argument("--name", "-n", default="台南餐廳資料庫", 
+                       help="新工作表名稱 (預設: 台南餐廳資料庫)")
+    parser.add_argument("--json-file", "-j", default="tainan_markets.json",
+                       help="餐廳 JSON 檔案路徑 (預設: tainan_markets.json)")
+    parser.add_argument("--batch-size", "-b", type=int, default=50,
+                       help="批次上傳大小 (預設: 50)")
+    parser.add_argument("--interactive", "-i", action="store_true",
+                       help="使用互動模式")
+    parser.add_argument("--view-only", "-v", action="store_true",
+                       help="僅檢視本地資料，不同步")
+    
+    args = parser.parse_args()
+    
     print("🍽️ 台南餐廳資料同步工具 (改良版)")
     print("=" * 50)
     
-    sync_manager = RestaurantSyncManagerV2()
+    sync_manager = RestaurantSyncManagerV2(args.json_file)
     
-    # 先設置客戶端
-    creds_file = input("認證檔案路徑 (預設：credentials.json)：").strip()
-    creds_file = creds_file or "credentials.json"
-    
-    if not sync_manager.setup_google_sheets_client(creds_file):
+    # 設置客戶端
+    if not sync_manager.setup_google_sheets_client(args.credentials):
         return
     
-    print("\n選擇工作表設置方式：")
-    print("1. 連接到現有的 Google Sheets（推薦）")
-    print("2. 創建新的 Google Sheets")
-    print("3. 檢視本地 JSON 資料")
-    
-    choice = input("\n請選擇 (1-3)：").strip()
-    
-    if choice == "1":
-        print("\n💡 請先手動在 Google Sheets 創建一個空白工作表")
-        print("1. 前往 https://sheets.google.com")
-        print("2. 創建新工作表")
-        print("3. 複製工作表 URL")
-        print("4. 將工作表分享給服務帳戶（在 credentials.json 中的 client_email）")
+    # 互動模式
+    if args.interactive:
+        print("\n選擇工作表設置方式：")
+        print("1. 連接到現有的 Google Sheets（推薦）")
+        print("2. 創建新的 Google Sheets")
+        print("3. 檢視本地 JSON 資料")
         
-        sheet_url = input("\n請輸入 Google Sheets URL：").strip()
-        if sheet_url:
-            if sync_manager.connect_to_existing_sheet(sheet_url):
+        choice = input("\n請選擇 (1-3)：").strip()
+        
+        if choice == "1":
+            print("\n💡 請先手動在 Google Sheets 創建一個空白工作表")
+            print("1. 前往 https://sheets.google.com")
+            print("2. 創建新工作表")
+            print("3. 複製工作表 URL")
+            print("4. 將工作表分享給服務帳戶（在 credentials.json 中的 client_email）")
+            
+            sheet_url = input("\n請輸入 Google Sheets URL：").strip()
+            if sheet_url:
+                if sync_manager.connect_to_existing_sheet(sheet_url):
+                    sync_manager.setup_headers()
+                    print("\n開始同步資料...")
+                    if sync_manager.sync_to_sheets(args.batch_size):
+                        print(f"\n🔗 Google Sheets 連結：{sheet_url}")
+        
+        elif choice == "2":
+            sheet_name = input("工作表名稱 (預設：台南餐廳資料庫)：").strip()
+            sheet_name = sheet_name or "台南餐廳資料庫"
+            
+            if sync_manager.create_new_sheet(sheet_name):
                 sync_manager.setup_headers()
                 print("\n開始同步資料...")
-                if sync_manager.sync_to_sheets():
-                    print(f"\n🔗 Google Sheets 連結：{sheet_url}")
-    
-    elif choice == "2":
-        sheet_name = input("工作表名稱 (預設：台南餐廳資料庫)：").strip()
-        sheet_name = sheet_name or "台南餐廳資料庫"
+                if sync_manager.sync_to_sheets(args.batch_size):
+                    url = sync_manager.get_sheet_url()
+                    if url:
+                        print(f"\n🔗 Google Sheets 連結：{url}")
         
-        if sync_manager.create_new_sheet(sheet_name):
-            sync_manager.setup_headers()
-            print("\n開始同步資料...")
-            if sync_manager.sync_to_sheets():
-                url = sync_manager.get_sheet_url()
-                if url:
-                    print(f"\n🔗 Google Sheets 連結：{url}")
+        elif choice == "3":
+            show_local_data(sync_manager)
+        
+        else:
+            print("❌ 無效選擇")
     
-    elif choice == "3":
-        restaurants = sync_manager.load_restaurant_data()
-        if restaurants:
-            print(f"\n📊 本地資料統計：")
-            print(f"總餐廳數：{len(restaurants)}")
-            
-            # 統計區域分布
-            areas = {}
-            for restaurant in restaurants:
-                area = restaurant.get("area", "未知")
-                areas[area] = areas.get(area, 0) + 1
-            
-            print("\n📍 區域分布：")
-            for area, count in sorted(areas.items(), key=lambda x: x[1], reverse=True):
-                print(f"  {area}：{count} 家")
-            
-            print(f"\n🔍 最近 5 家餐廳：")
-            for restaurant in restaurants[-5:]:
-                print(f"  • {restaurant.get('name')} ({restaurant.get('area')}) - {restaurant.get('specialty')}")
-    
+    # 命令列模式
     else:
-        print("❌ 無效選擇")
+        if args.view_only:
+            show_local_data(sync_manager)
+            return
+        
+        if args.url:
+            # 連接到現有工作表
+            if sync_manager.connect_to_existing_sheet(args.url):
+                sync_manager.setup_headers()
+                print("\n開始同步資料...")
+                if sync_manager.sync_to_sheets(args.batch_size):
+                    print(f"\n🔗 Google Sheets 連結：{args.url}")
+        else:
+            # 創建新工作表
+            if sync_manager.create_new_sheet(args.name):
+                sync_manager.setup_headers()
+                print("\n開始同步資料...")
+                if sync_manager.sync_to_sheets(args.batch_size):
+                    url = sync_manager.get_sheet_url()
+                    if url:
+                        print(f"\n🔗 Google Sheets 連結：{url}")
+
+def show_local_data(sync_manager):
+    """顯示本地資料統計"""
+    restaurants = sync_manager.load_restaurant_data()
+    if restaurants:
+        print(f"\n📊 本地資料統計：")
+        print(f"總餐廳數：{len(restaurants)}")
+        
+        # 統計區域分布
+        areas = {}
+        for restaurant in restaurants:
+            area = restaurant.get("area", "未知")
+            areas[area] = areas.get(area, 0) + 1
+        
+        print("\n📍 區域分布：")
+        for area, count in sorted(areas.items(), key=lambda x: x[1], reverse=True):
+            print(f"  {area}：{count} 家")
+        
+        print(f"\n🔍 最近 5 家餐廳：")
+        for restaurant in restaurants[-5:]:
+            print(f"  • {restaurant.get('name')} ({restaurant.get('area')}) - {restaurant.get('specialty')}")
 
 if __name__ == "__main__":
     main() 

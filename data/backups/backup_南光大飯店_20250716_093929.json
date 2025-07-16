@@ -24,6 +24,12 @@
     "description": "綜合海鮮料多，老油條必配"
   },
   {
+    "name": "邱家小卷米粉",
+    "specialty": "小卷米粉",
+    "area": "中西區",
+    "description": "清甜湯頭配彈牙小卷"
+  },
+  {
     "name": "炸雞洋行",
     "specialty": "炸雞",
     "area": "中西區",
@@ -138,7 +144,7 @@
     "description": "韓系裝潢，清甜湯底"
   },
   {
-    "name": "六月三十義式手工冰淇淋",
+    "name": "六月三十冰淇淋",
     "specialty": "義式冰淇淋",
     "area": "中西區",
     "description": "手工多口味，網美打卡"
@@ -190,12 +196,6 @@
     "specialty": "牛奶霜",
     "area": "東區",
     "description": "煉乳＋紅豆+濃郁奶冰"
-  },
-  {
-    "name": "雙全紅茶",
-    "specialty": "紅茶",
-    "area": "中西區",
-    "description": "古早仙女紅茶，微苦回甘"
   },
   {
     "name": "福泰飯桌",
@@ -262,12 +262,6 @@
     "specialty": "羊肉湯",
     "area": "中西區",
     "description": "清香羊肉湯，道地暖身"
-  },
-  {
-    "name": "小西門青草茶",
-    "specialty": "青草茶",
-    "area": "中西區",
-    "description": "解膩消暑台式涼飲"
   },
   {
     "name": "無名脆肉攤",
@@ -1804,11 +1798,5 @@
     "specialty": "魯肉飯",
     "area": "中西區",
     "description": "傳統肉燥香氣撲鼻"
-  },
-  {
-    "name": "邱家小卷米粉",
-    "specialty": "小卷米粉",
-    "area": "中西區",
-    "description": "清甜湯頭配彈牙小卷"
   }
 ]
