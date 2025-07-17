@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 class FirebaseRestaurantService {
   static final FirebaseRestaurantService _instance = FirebaseRestaurantService._internal();
@@ -637,4 +636,97 @@ class FirebaseRestaurantService {
     "鴻品牛肉湯": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
     ],
+  };
+
+  // 獲取餐廳照片 URL 列表
+  static List<String> getRestaurantPhotoUrls(String restaurantName) {
+    return _restaurantPhotoUrls[restaurantName] ?? [];
+  }
+
+  // 檢查餐廳是否有照片
+  static bool hasRestaurantPhotos(String restaurantName) {
+    return _restaurantPhotoUrls.containsKey(restaurantName) && _restaurantPhotoUrls[restaurantName]!.isNotEmpty;
+  }
+
+  // 獲取所有有照片的餐廳名稱
+  static List<String> getRestaurantsWithPhotos() {
+    return _restaurantPhotoUrls.keys.toList();
+  }
+
+  // 為餐廳列表添加 Firebase 照片
+  static List<Map<String, dynamic>> enhanceRestaurantListWithFirebasePhotos(List<Map<String, dynamic>> restaurants) {
+    return restaurants.map((restaurant) {
+      final restaurantName = restaurant['name']?.toString() ?? '';
+      final photoUrls = getRestaurantPhotoUrls(restaurantName);
+      
+      if (photoUrls.isNotEmpty) {
+        restaurant['has_firebase_photos'] = true;
+        restaurant['photo_urls'] = jsonEncode(photoUrls);
+        // 如果有 Firebase 照片，優先使用第一張作為主要圖片
+        if (restaurant['image'] == null || restaurant['image'].toString().isEmpty) {
+          restaurant['image'] = photoUrls.first;
+        }
+      } else {
+        restaurant['has_firebase_photos'] = false;
+        restaurant['photo_urls'] = jsonEncode([]);
+      }
+      
+      return restaurant;
+    }).toList();
+  }
+
+  // 為單一餐廳添加 Firebase 照片
+  static Map<String, dynamic> enhanceRestaurantWithFirebasePhotos(Map<String, dynamic> restaurant) {
+    final restaurantName = restaurant['name']?.toString() ?? '';
+    final photoUrls = getRestaurantPhotoUrls(restaurantName);
+    
+    if (photoUrls.isNotEmpty) {
+      restaurant['has_firebase_photos'] = true;
+      restaurant['photo_urls'] = jsonEncode(photoUrls);
+      // 如果有 Firebase 照片，優先使用第一張作為主要圖片
+      if (restaurant['image'] == null || restaurant['image'].toString().isEmpty) {
+        restaurant['image'] = photoUrls.first;
+      }
+    } else {
+      restaurant['has_firebase_photos'] = false;
+      restaurant['photo_urls'] = jsonEncode([]);
+    }
+    
+    return restaurant;
+  }
+
+  // 檢查餐廳是否有 Firebase 照片
+  static bool hasFirebasePhotos(String restaurantName) {
+    return hasRestaurantPhotos(restaurantName);
+  }
+
+  // 獲取照片統計資訊
+  static Map<String, dynamic> getPhotoStats() {
+    final totalRestaurants = _restaurantPhotoUrls.length;
+    int totalPhotos = 0;
+    for (final photos in _restaurantPhotoUrls.values) {
+      totalPhotos += photos.length;
+    }
+    
+    return {
+      'total_restaurants': totalRestaurants,
+      'total_photos': totalPhotos,
+      'average_photos_per_restaurant': (totalRestaurants > 0 ? totalPhotos / totalRestaurants : 0).toStringAsFixed(1),
+    };
+  }
+
+  // 獲取所有有 Firebase 照片的餐廳名稱
+  static List<String> getAllFirebaseRestaurantNames() {
+    return getRestaurantsWithPhotos();
+  }
+
+  // 獲取指定餐廳的所有 Firebase 照片
+  static List<String> getFirebasePhotos(String restaurantName, {int? maxPhotos}) {
+    final photos = getRestaurantPhotoUrls(restaurantName);
+    if (maxPhotos != null) {
+      return photos.take(maxPhotos).toList();
+    }
+    return photos;
+  }
+}
 
