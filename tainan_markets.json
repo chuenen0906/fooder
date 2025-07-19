@@ -1810,5 +1810,323 @@
     "specialty": "小卷米粉",
     "area": "中西區",
     "description": "清甜湯頭配彈牙小卷"
+  },
+  {
+    "name": "小杜意麵",
+    "specialty": "乾意麵",
+    "area": "北區",
+    "description": "老饕推薦，醬香四溢"
+  },
+  {
+    "name": "連得堂煎餅",
+    "specialty": "炭烤煎餅",
+    "area": "中西區",
+    "description": "古法製作，手工煎餅排隊店"
+  },
+  {
+    "name": "王氏魚皮",
+    "specialty": "魚皮湯",
+    "area": "南區",
+    "description": "在地人愛吃的早餐魚湯店"
+  },
+  {
+    "name": "明和菜粽",
+    "specialty": "菜粽",
+    "area": "北區",
+    "description": "軟黏鹹香的古早味粽"
+  },
+  {
+    "name": "好地方碗粿",
+    "specialty": "碗粿",
+    "area": "南區",
+    "description": "傳統柴魚醬搭配Q彈米漿"
+  },
+  {
+    "name": "富成炒飯專家",
+    "specialty": "蛋炒飯",
+    "area": "東區",
+    "description": "粒粒分明的炒飯霸主"
+  },
+  {
+    "name": "赤崁東市場米糕",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "老市場內的古早米糕"
+  },
+  {
+    "name": "下大道米糕",
+    "specialty": "米糕",
+    "area": "北區",
+    "description": "在地人從小吃到大的傳統味"
+  },
+  {
+    "name": "順風號",
+    "specialty": "炸雞排",
+    "area": "東區",
+    "description": "厚實又多汁的雞排"
+  },
+  {
+    "name": "阿婆炒米粉",
+    "specialty": "炒米粉",
+    "area": "南區",
+    "description": "老字號炒米粉配滷蛋、豆腐"
+  },
+  {
+    "name": "老家後甲魯麵",
+    "specialty": "魯麵",
+    "area": "東區",
+    "description": "古早味魯麵配大骨湯"
+  },
+  {
+    "name": "阿財牛肉湯",
+    "specialty": "牛肉湯",
+    "area": "南區",
+    "description": "台南傳統牛肉湯專門店"
+  },
+  {
+    "name": "小林煎餃",
+    "specialty": "鍋貼煎餃",
+    "area": "北區",
+    "description": "平價又多汁的銅板美食"
+  },
+  {
+    "name": "新都小籠包",
+    "specialty": "小籠湯包",
+    "area": "東區",
+    "description": "湯汁飽滿，現點現蒸"
+  },
+  {
+    "name": "王記鮮魚湯",
+    "specialty": "鮮魚湯",
+    "area": "中西區",
+    "description": "每日新鮮現殺魚片湯"
+  },
+  {
+    "name": "廖家香腸",
+    "specialty": "碳烤香腸",
+    "area": "南區",
+    "description": "炭香十足的手工香腸"
+  },
+  {
+    "name": "懷舊炒鱔魚麵",
+    "specialty": "炒鱔魚",
+    "area": "北區",
+    "description": "酸甜口感搭配現炒鱔魚"
+  },
+  {
+    "name": "裕成水果店",
+    "specialty": "水果切盤",
+    "area": "東區",
+    "description": "擺盤華麗的台南水果代表"
+  },
+  {
+    "name": "小六鍋燒意麵",
+    "specialty": "鍋燒意麵",
+    "area": "北區",
+    "description": "湯頭帶蝦味，麵條彈牙"
+  },
+  {
+    "name": "阿財意麵",
+    "specialty": "乾意麵",
+    "area": "東區",
+    "description": "簡單調味但超有味道"
+  },
+  {
+    "name": "大菜市碗粿",
+    "specialty": "碗粿",
+    "area": "中西區",
+    "description": "菜市場隱藏版古早味"
+  },
+  {
+    "name": "南園米糕",
+    "specialty": "米糕",
+    "area": "南區",
+    "description": "配菜豐富、甜辣醬提味"
+  },
+  {
+    "name": "開元虱目魚",
+    "specialty": "虱目魚肚湯",
+    "area": "北區",
+    "description": "厚實肥美魚肚"
+  },
+  {
+    "name": "延平市場魯肉飯",
+    "specialty": "魯肉飯",
+    "area": "中西區",
+    "description": "油香入味，不膩口"
+  },
+  {
+    "name": "陳家滷味",
+    "specialty": "冷滷味",
+    "area": "東區",
+    "description": "滷味冷吃更入味"
+  },
+  {
+    "name": "阿來豬腳飯",
+    "specialty": "豬腳飯",
+    "area": "北區",
+    "description": "Q彈不膩豬腳配滷汁"
+  },
+  {
+    "name": "水交社豆花",
+    "specialty": "豆花",
+    "area": "南區",
+    "description": "濃濃古早味豆花"
+  },
+  {
+    "name": "美華冰菓室",
+    "specialty": "剉冰",
+    "area": "東區",
+    "description": "傳統配料冰店"
+  },
+  {
+    "name": "裕義紅茶",
+    "specialty": "古早味紅茶",
+    "area": "中西區",
+    "description": "微糖超順口"
+  },
+  {
+    "name": "金得炸粿",
+    "specialty": "炸粿",
+    "area": "南區",
+    "description": "在地人下午點心愛店"
+  },
+  {
+    "name": "和意路米糕",
+    "specialty": "米糕",
+    "area": "東區",
+    "description": "香菜+甜辣醬超加分"
+  },
+  {
+    "name": "府城豬油拌飯",
+    "specialty": "豬油飯",
+    "area": "東區",
+    "description": "香氣逼人，簡單經典"
+  },
+  {
+    "name": "三輪車紅豆餅",
+    "specialty": "紅豆餅",
+    "area": "中西區",
+    "description": "現烤酥脆、餡料飽滿"
+  },
+  {
+    "name": "文成滷肉飯",
+    "specialty": "滷肉飯",
+    "area": "南區",
+    "description": "魯汁濃郁，平價飽足"
+  },
+  {
+    "name": "國賓市場麵線",
+    "specialty": "麵線羹",
+    "area": "北區",
+    "description": "台味十足，口感順滑"
+  },
+  {
+    "name": "江水號八寶冰",
+    "specialty": "八寶冰",
+    "area": "中西區",
+    "description": "台南老字號冰品，多種配料任選"
+  },
+  {
+    "name": "民族鍋燒意麵",
+    "specialty": "鍋燒意麵",
+    "area": "中西區",
+    "description": "濃郁湯頭與傳統炸意麵"
+  },
+  {
+    "name": "國榮肉燥飯",
+    "specialty": "魯肉飯",
+    "area": "中西區",
+    "description": "醬香肉燥飯與滷蛋、白菜配料"
+  },
+  {
+    "name": "阿田牛肉湯",
+    "specialty": "牛肉湯",
+    "area": "中西區",
+    "description": "台南早餐經典，現沖牛肉湯"
+  },
+  {
+    "name": "卓家汕頭魚麵",
+    "specialty": "魚麵",
+    "area": "中西區",
+    "description": "少見手工魚麵，口感滑順"
+  },
+  {
+    "name": "阿全碗粿",
+    "specialty": "碗粿",
+    "area": "中西區",
+    "description": "古早味碗粿，醬汁鹹香"
+  },
+  {
+    "name": "萬伯鹽水意麵",
+    "specialty": "鹽水意麵",
+    "area": "中西區",
+    "description": "乾拌醬香十足，配貢丸湯最搭"
+  },
+  {
+    "name": "泰成水果店",
+    "specialty": "芒果冰",
+    "area": "中西區",
+    "description": "浮誇系芒果冰、奶酪滑順"
+  },
+  {
+    "name": "傳承腸粉",
+    "specialty": "廣東腸粉",
+    "area": "中西區",
+    "description": "現蒸腸粉皮滑餡多"
+  },
+  {
+    "name": "阿伯羊肉湯",
+    "specialty": "羊肉湯",
+    "area": "中西區",
+    "description": "羊肉湯+米血是當地人宵夜首選"
+  },
+  {
+    "name": "豆奶宗",
+    "specialty": "豆漿早餐",
+    "area": "中西區",
+    "description": "鹹豆漿、蘿蔔糕、飯糰經典組合"
+  },
+  {
+    "name": "福榮小吃",
+    "specialty": "豬血湯、乾麵",
+    "area": "中西區",
+    "description": "小菜選擇豐富，口味純樸"
+  },
+  {
+    "name": "開元春捲",
+    "specialty": "春捲",
+    "area": "中西區",
+    "description": "大塊花生糖與炒菜混合而成"
+  },
+  {
+    "name": "保安路米糕",
+    "specialty": "米糕",
+    "area": "中西區",
+    "description": "附魚鬆、肉鬆與酸菜"
+  },
+  {
+    "name": "順風號炸雞",
+    "specialty": "炸雞排",
+    "area": "中西區",
+    "description": "酥脆雞排撒上胡椒粉，宵夜必吃"
+  },
+  {
+    "name": "友愛鹹酥雞",
+    "specialty": "鹽酥雞",
+    "area": "中西區",
+    "description": "香氣逼人，常常賣光提早收"
+  },
+  {
+    "name": "阿娟咖哩飯",
+    "specialty": "古早味咖哩飯",
+    "area": "中西區",
+    "description": "偏甜咖哩搭滷蛋與肉燥"
+  },
+  {
+    "name": "阿江炒鱔魚",
+    "specialty": "鱔魚意麵",
+    "area": "中西區",
+    "description": "酸甜醬汁現炒鱔魚片"
   }
 ]

@@ -3476,7 +3476,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                           itemCount: filteredRestaurantNames.length,
                           itemBuilder: (context, index) {
                             final restaurantName = filteredRestaurantNames[index];
-                            final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName, maxPhotos: 5);
+                            final photos = FirebaseRestaurantService.getFirebasePhotos(restaurantName);
                             return Card(
                               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               child: ListTile(

@@ -240,6 +240,12 @@
     "description": "羹湯鮮甜片狀魚肉"
   },
   {
+    "name": "Kokoni水果茶",
+    "specialty": "水果茶",
+    "area": "中西區",
+    "description": "IG新潮酸甜水果茶"
+  },
+  {
     "name": "石頭鄉燜烤香味玉米",
     "specialty": "烤玉米",
     "area": "中西區",
@@ -1786,145 +1792,5 @@
     "specialty": "魯肉飯",
     "area": "中西區",
     "description": "傳統肉燥香氣撲鼻"
-  },
-  {
-    "name": "江水號八寶冰",
-    "specialty": "八寶冰",
-    "address": "中西區國華街三段169號",
-    "description": "台南老字號冰品，多種配料任選",
-    "area": "中西區"
-  },
-  {
-    "name": "民族鍋燒意麵",
-    "specialty": "鍋燒意麵",
-    "address": "中西區民族路三段36號",
-    "description": "濃郁湯頭與傳統炸意麵",
-    "area": "中西區"
-  },
-  {
-    "name": "國榮肉燥飯",
-    "specialty": "魯肉飯",
-    "address": "中西區國華街三段139號",
-    "description": "醬香肉燥飯與滷蛋、白菜配料",
-    "area": "中西區"
-  },
-  {
-    "name": "阿田牛肉湯",
-    "specialty": "牛肉湯",
-    "address": "中西區國華街三段88號",
-    "description": "台南早餐經典，現沖牛肉湯",
-    "area": "中西區"
-  },
-  {
-    "name": "卓家汕頭魚麵",
-    "specialty": "魚麵",
-    "address": "中西區國華街三段109號",
-    "description": "少見手工魚麵，口感滑順",
-    "area": "中西區"
-  },
-  {
-    "name": "阿全碗粿",
-    "specialty": "碗粿",
-    "address": "中西區國華街三段125號",
-    "description": "古早味碗粿，醬汁鹹香",
-    "area": "中西區"
-  },
-  {
-    "name": "萬伯鹽水意麵",
-    "specialty": "鹽水意麵",
-    "address": "中西區國華街二段175號",
-    "description": "乾拌醬香十足，配貢丸湯最搭",
-    "area": "中西區"
-  },
-  {
-    "name": "裕成水果店",
-    "specialty": "水果切盤",
-    "address": "中西區正興街80號",
-    "description": "擺盤華麗、高山芒果冰特別受歡迎",
-    "area": "中西區"
-  },
-  {
-    "name": "泰成水果店",
-    "specialty": "芒果冰",
-    "address": "中西區民生路一段198號",
-    "description": "浮誇系芒果冰、奶酪滑順",
-    "area": "中西區"
-  },
-  {
-    "name": "傳承腸粉",
-    "specialty": "廣東腸粉",
-    "address": "中西區海安路一段與正興街交叉口",
-    "description": "現蒸腸粉皮滑餡多",
-    "area": "中西區"
-  },
-  {
-    "name": "阿伯羊肉湯",
-    "specialty": "羊肉湯",
-    "address": "中西區海安路一段與民族路交叉口",
-    "description": "羊肉湯+米血是當地人宵夜首選",
-    "area": "中西區"
-  },
-  {
-    "name": "豆奶宗",
-    "specialty": "豆漿早餐",
-    "address": "中西區國華街三段127號",
-    "description": "鹹豆漿、蘿蔔糕、飯糰經典組合",
-    "area": "中西區"
-  },
-  {
-    "name": "福榮小吃",
-    "specialty": "豬血湯、乾麵",
-    "address": "中西區保安路72號",
-    "description": "小菜選擇豐富，口味純樸",
-    "area": "中西區"
-  },
-  {
-    "name": "開元春捲",
-    "specialty": "春捲",
-    "address": "中西區保安路",
-    "description": "大塊花生糖與炒菜混合而成",
-    "area": "中西區"
-  },
-  {
-    "name": "小杜意麵",
-    "specialty": "乾意麵",
-    "address": "中西區海安路一段",
-    "description": "炸醬與扁意麵組合是絕配",
-    "area": "中西區"
-  },
-  {
-    "name": "保安路米糕",
-    "specialty": "米糕",
-    "address": "中西區保安路58號",
-    "description": "附魚鬆、肉鬆與酸菜",
-    "area": "中西區"
-  },
-  {
-    "name": "順風號炸雞",
-    "specialty": "炸雞排",
-    "address": "中西區海安路一段125號",
-    "description": "酥脆雞排撒上胡椒粉，宵夜必吃",
-    "area": "中西區"
-  },
-  {
-    "name": "友愛鹹酥雞",
-    "specialty": "鹽酥雞",
-    "address": "中西區友愛街與海安路交叉口",
-    "description": "香氣逼人，常常賣光提早收",
-    "area": "中西區"
-  },
-  {
-    "name": "阿娟咖哩飯",
-    "specialty": "古早味咖哩飯",
-    "address": "中西區西門路二段35號",
-    "description": "偏甜咖哩搭滷蛋與肉燥",
-    "area": "中西區"
-  },
-  {
-    "name": "阿江炒鱔魚",
-    "specialty": "鱔魚意麵",
-    "address": "中西區民族路三段89號",
-    "description": "酸甜醬汁現炒鱔魚片",
-    "area": "中西區"
   }
 ]

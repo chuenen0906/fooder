@@ -128,7 +128,8 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%96%B0%E5%8A%A0%E5%9D%A1%E5%86%B0%E5%9F%8E/%E6%96%B0%E5%8A%A0%E5%9D%A1%E5%86%B0%E5%9F%8E.jpg"
     ],
     "阿川粉圓冰": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0/%E9%98%BF%E5%B7%9D%E7%B2%89%E5%9C%93%E5%86%B0_2.jpg"
     ],
     "懷舊小棧杏仁豆腐冰": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E6%87%B7%E8%88%8A%E5%B0%8F%E6%A3%A7%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0/%E6%87%B7%E8%88%8A%E5%B0%8F%E6%A3%A7%E6%9D%8F%E4%BB%81%E8%B1%86%E8%85%90%E5%86%B0_1.jpg"
@@ -143,10 +144,8 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%86%87%E6%B6%8E%E5%9D%8A%E9%8D%8B%E7%87%92%E6%84%8F%E9%BA%B5/%E9%86%87%E6%B6%8E%E5%9D%8A%E9%8D%8B%E7%87%92%E6%84%8F%E9%BA%B5.jpg"
     ],
     "阿鳳浮水虱目魚羹": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E9%B3%B3%E6%B5%AE%E6%B0%B4%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%BE%B9/%E9%98%BF%E9%B3%B3%E6%B5%AE%E6%B0%B4%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%BE%B9.JPG"
-    ],
-    "Kokoni水果茶": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Kokoni%E6%B0%B4%E6%9E%9C%E8%8C%B6/Kokoni%E6%B0%B4%E6%9E%9C%E8%8C%B6.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E9%B3%B3%E6%B5%AE%E6%B0%B4%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%BE%B9/%E9%98%BF%E9%B3%B3%E6%B5%AE%E6%B0%B4%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%BE%B9_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%98%BF%E9%B3%B3%E6%B5%AE%E6%B0%B4%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%BE%B9/%E9%98%BF%E9%B3%B3%E6%B5%AE%E6%B0%B4%E8%99%B1%E7%9B%AE%E9%AD%9A%E7%BE%B9_2.jpg"
     ],
     "石頭鄉燜烤香味玉米": [
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%9F%B3%E9%A0%AD%E9%84%89%E7%87%9C%E7%83%A4%E9%A6%99%E5%91%B3%E7%8E%89%E7%B1%B3/%E7%9F%B3%E9%A0%AD%E9%84%89%E7%87%9C%E7%83%A4%E9%A6%99%E5%91%B3%E7%8E%89%E7%B1%B3.JPG"
@@ -634,99 +633,111 @@ class FirebaseRestaurantService {
       "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E7%B1%B3%E8%A1%97%E9%9B%9E%E8%9B%8B%E7%B3%95/%E7%B1%B3%E8%A1%97%E9%9B%9E%E8%9B%8B%E7%B3%95.jpg"
     ],
     "鴻品牛肉湯": [
-      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF.jpg"
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF_1.jpg",
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF/%E9%B4%BB%E5%93%81%E7%89%9B%E8%82%89%E6%B9%AF_2.jpg"
     ],
   };
 
-  // 獲取餐廳照片 URL 列表
-  static List<String> getRestaurantPhotoUrls(String restaurantName) {
-    return _restaurantPhotoUrls[restaurantName] ?? [];
+  /// 根據餐廳名稱獲取 Firebase 上的照片 URL
+  static List<String> getFirebasePhotos(String restaurantName) {
+    // 精確匹配
+    if (_restaurantPhotoUrls.containsKey(restaurantName)) {
+      return _restaurantPhotoUrls[restaurantName]!;
+    }
+    
+    // 模糊匹配 - 處理名稱可能的變化
+    for (final entry in _restaurantPhotoUrls.entries) {
+      final firebaseName = entry.key;
+      
+      // 如果 Google API 的名稱包含 Firebase 的名稱，或反之
+      if (restaurantName.contains(firebaseName) || firebaseName.contains(restaurantName)) {
+        print("🔍 模糊匹配成功: '$restaurantName' -> '$firebaseName'");
+        return entry.value;
+      }
+      
+      // 去除常見的店面相關詞語進行比較
+      final cleanGoogleName = _cleanRestaurantName(restaurantName);
+      final cleanFirebaseName = _cleanRestaurantName(firebaseName);
+      
+      if (cleanGoogleName == cleanFirebaseName) {
+        print("🔍 清理後匹配成功: '$restaurantName' -> '$firebaseName'");
+        return entry.value;
+      }
+    }
+    
+    print("❌ 未找到匹配的 Firebase 照片: $restaurantName");
+    return [];
   }
 
-  // 檢查餐廳是否有照片
-  static bool hasRestaurantPhotos(String restaurantName) {
-    return _restaurantPhotoUrls.containsKey(restaurantName) && _restaurantPhotoUrls[restaurantName]!.isNotEmpty;
+  /// 清理餐廳名稱，移除常見的後綴詞
+  static String _cleanRestaurantName(String name) {
+    return name
+        .replaceAll('店', '')
+        .replaceAll('館', '')
+        .replaceAll('屋', '')
+        .replaceAll('坊', '')
+        .replaceAll('家', '')
+        .replaceAll('號', '')
+        .replaceAll('記', '')
+        .replaceAll('牌', '')
+        .replaceAll('老', '')
+        .replaceAll(' ', '');
   }
 
-  // 獲取所有有照片的餐廳名稱
-  static List<String> getRestaurantsWithPhotos() {
+  /// 檢查餐廳是否有 Firebase 照片
+  static bool hasFirebasePhotos(String restaurantName) {
+    return getFirebasePhotos(restaurantName).isNotEmpty;
+  }
+
+  /// 獲取所有有 Firebase 照片的餐廳名稱
+  static List<String> getAllFirebaseRestaurantNames() {
     return _restaurantPhotoUrls.keys.toList();
   }
 
-  // 為餐廳列表添加 Firebase 照片
-  static List<Map<String, dynamic>> enhanceRestaurantListWithFirebasePhotos(List<Map<String, dynamic>> restaurants) {
-    return restaurants.map((restaurant) {
-      final restaurantName = restaurant['name']?.toString() ?? '';
-      final photoUrls = getRestaurantPhotoUrls(restaurantName);
-      
-      if (photoUrls.isNotEmpty) {
-        restaurant['has_firebase_photos'] = true;
-        restaurant['photo_urls'] = jsonEncode(photoUrls);
-        // 如果有 Firebase 照片，優先使用第一張作為主要圖片
-        if (restaurant['image'] == null || restaurant['image'].toString().isEmpty) {
-          restaurant['image'] = photoUrls.first;
-        }
-      } else {
-        restaurant['has_firebase_photos'] = false;
-        restaurant['photo_urls'] = jsonEncode([]);
-      }
-      
-      return restaurant;
-    }).toList();
-  }
-
-  // 為單一餐廳添加 Firebase 照片
-  static Map<String, dynamic> enhanceRestaurantWithFirebasePhotos(Map<String, dynamic> restaurant) {
-    final restaurantName = restaurant['name']?.toString() ?? '';
-    final photoUrls = getRestaurantPhotoUrls(restaurantName);
+  /// 結合 Google API 餐廳資料和 Firebase 照片
+  static Map<String, dynamic> enhanceRestaurantWithFirebasePhotos(Map<String, dynamic> googleRestaurant) {
+    final restaurantName = googleRestaurant['name'] ?? '';
+    final firebasePhotos = getFirebasePhotos(restaurantName);
     
-    if (photoUrls.isNotEmpty) {
-      restaurant['has_firebase_photos'] = true;
-      restaurant['photo_urls'] = jsonEncode(photoUrls);
-      // 如果有 Firebase 照片，優先使用第一張作為主要圖片
-      if (restaurant['image'] == null || restaurant['image'].toString().isEmpty) {
-        restaurant['image'] = photoUrls.first;
-      }
+    if (firebasePhotos.isNotEmpty) {
+      // 使用 Firebase 照片取代 Google Photos
+      googleRestaurant['photo_urls'] = json.encode(firebasePhotos);
+      googleRestaurant['has_firebase_photos'] = true;
+      googleRestaurant['photo_source'] = 'firebase';
+      
+      print("✅ 使用 Firebase 照片: $restaurantName (${firebasePhotos.length} 張)");
     } else {
-      restaurant['has_firebase_photos'] = false;
-      restaurant['photo_urls'] = jsonEncode([]);
+      googleRestaurant['has_firebase_photos'] = false;
+      googleRestaurant['photo_source'] = 'google';
     }
     
-    return restaurant;
+    return googleRestaurant;
   }
 
-  // 檢查餐廳是否有 Firebase 照片
-  static bool hasFirebasePhotos(String restaurantName) {
-    return hasRestaurantPhotos(restaurantName);
+  /// 批量處理餐廳列表，加入 Firebase 照片
+  static List<Map<String, dynamic>> enhanceRestaurantListWithFirebasePhotos(List<Map<String, dynamic>> restaurants) {
+    int firebasePhotoCount = 0;
+    int totalRestaurants = restaurants.length;
+    
+    final enhancedRestaurants = restaurants.map((restaurant) {
+      final enhanced = enhanceRestaurantWithFirebasePhotos(restaurant);
+      if (enhanced['has_firebase_photos'] == true) {
+        firebasePhotoCount++;
+      }
+      return enhanced;
+    }).toList();
+    
+    print("📊 Firebase 照片整合完成: $firebasePhotoCount/$totalRestaurants 家餐廳使用 Firebase 照片");
+    
+    return enhancedRestaurants;
   }
 
-  // 獲取照片統計資訊
+  /// 取得統計資訊
   static Map<String, dynamic> getPhotoStats() {
-    final totalRestaurants = _restaurantPhotoUrls.length;
-    int totalPhotos = 0;
-    for (final photos in _restaurantPhotoUrls.values) {
-      totalPhotos += photos.length;
-    }
-    
     return {
-      'total_restaurants': totalRestaurants,
-      'total_photos': totalPhotos,
-      'average_photos_per_restaurant': (totalRestaurants > 0 ? totalPhotos / totalRestaurants : 0).toStringAsFixed(1),
+      'total_firebase_restaurants': _restaurantPhotoUrls.length,
+      'total_firebase_photos': _restaurantPhotoUrls.values.fold(0, (sum, photos) => sum + photos.length),
+      'restaurants_with_photos': _restaurantPhotoUrls.keys.toList(),
     };
   }
-
-  // 獲取所有有 Firebase 照片的餐廳名稱
-  static List<String> getAllFirebaseRestaurantNames() {
-    return getRestaurantsWithPhotos();
-  }
-
-  // 獲取指定餐廳的所有 Firebase 照片
-  static List<String> getFirebasePhotos(String restaurantName, {int? maxPhotos}) {
-    final photos = getRestaurantPhotoUrls(restaurantName);
-    if (maxPhotos != null) {
-      return photos.take(maxPhotos).toList();
-    }
-    return photos;
-  }
 }
-

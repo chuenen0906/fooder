@@ -406,6 +406,16 @@
     "uploaded_at": "2025-07-10T19:23:25.894137"
   },
   {
+    "name": "Kokoni水果茶",
+    "specialty": "水果茶",
+    "area": "中西區",
+    "description": "IG新潮酸甜水果茶",
+    "photos": [
+      "https://storage.googleapis.com/folder-47165.firebasestorage.app/restaurant_photos/Kokoni%E6%B0%B4%E6%9E%9C%E8%8C%B6/Kokoni%E6%B0%B4%E6%9E%9C%E8%8C%B6.jpg"
+    ],
+    "uploaded_at": "2025-07-10T19:23:27.290173"
+  },
+  {
     "name": "石頭鄉燜烤香味玉米",
     "specialty": "烤玉米",
     "area": "中西區",
