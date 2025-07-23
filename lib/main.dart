@@ -1356,10 +1356,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     });
 
     if (previous == currentRoundList.length - 1) {
-      List<Map<String, String>> nextRoundList = liked.map((e) => Map<String, String>.from(json.decode(e))).toList();
+      List<Map<String, dynamic>> nextRoundList = liked.map((e) => Map<String, dynamic>.from(json.decode(e))).toList();
       
       nextRoundList = nextRoundList.where((restaurant) {
-        double distance = double.parse(restaurant['distance'] ?? '0');
+        double distance = double.parse(restaurant['distance']?.toString() ?? '0');
         bool isInRange = distance <= searchRadius * 1000;
         return isInRange;
       }).toList();
@@ -1414,10 +1414,10 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       );
       return;
     }
-    List<Map<String, String>> nextRoundList = liked.map((e) => Map<String, String>.from(json.decode(e))).toList();
+    List<Map<String, dynamic>> nextRoundList = liked.map((e) => Map<String, dynamic>.from(json.decode(e))).toList();
     
     nextRoundList = nextRoundList.where((restaurant) {
-      double distance = double.parse(restaurant['distance'] ?? '0');
+      double distance = double.parse(restaurant['distance']?.toString() ?? '0');
       bool isInRange = distance <= searchRadius * 1000;
       return isInRange;
     }).toList();
