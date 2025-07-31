@@ -155,7 +155,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   double _estimatedCost = 0.0;
   
   // 防抖機制
-  Timer? _debounceTimer;
+
   bool _isFetching = false;
 
   // 新增：API 使用量顯示
@@ -178,21 +178,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   double _firebasePhotoManagerScrollPosition = 0.0;
   ScrollController? _firebasePhotoManagerScrollController;
   
-  // 🔍 新增：搜尋功能相關變數
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  bool _isSearching = false;
-  List<Map<String, dynamic>> _searchResults = [];
-  List<Map<String, dynamic>> _originalRestaurantList = [];
-  
-  // 快速篩選相關
-  String _selectedArea = '';
-  String _selectedSpecialty = '';
-  List<String> _availableAreas = [];
-  List<String> _availableSpecialties = [];
-  
-  // 搜尋模式
-  bool _isSearchMode = false;
+
   // TODO: 給朋友使用時改為 15-20 間餐廳
   
   // 新增：快取優化設定
@@ -348,7 +334,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
     _loadPlaceDetailsCache(); // 讀取 Place Details 快取
     _loadPhotoUrlCache(); // 讀取照片 URL 快取
-    _initializeSearchFilters(); // 初始化搜尋篩選
     
 
   }
@@ -360,149 +345,15 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
   void dispose() {
     _swipeAnimationController.dispose();
     _titleTapTimer?.cancel();
-    _searchController.dispose();
-    _debounceTimer?.cancel();
+
     _gridScrollController.dispose(); // 清理滾動控制器
     _firebasePhotoManagerScrollController?.dispose(); // 清理 Firebase 照片管理滾動控制器
     super.dispose();
   }
   
-  // 🔍 搜尋功能相關方法
-  Future<void> _initializeSearchFilters() async {
-    // 從現有餐廳列表中提取可用的區域和特色料理
-    await _updateFilterOptions();
-  }
+
   
-  Future<void> _updateFilterOptions() async {
-    try {
-      // 從本地資料庫獲取所有餐廳
-      final allRestaurants = await LocalRestaurantService.loadLocalRestaurants();
-      
-      // 提取所有區域
-      final areas = allRestaurants
-          .map((r) => r['area']?.toString() ?? '')
-          .where((area) => area.isNotEmpty)
-          .toSet()
-          .toList();
-      areas.sort();
-      
-      // 提取所有特色料理
-      final specialties = allRestaurants
-          .map((r) => r['specialty']?.toString() ?? '')
-          .where((specialty) => specialty.isNotEmpty)
-          .toSet()
-          .toList();
-      specialties.sort();
-      
-      if (mounted) {
-        setState(() {
-          _availableAreas = areas;
-          _availableSpecialties = specialties;
-        });
-      }
-      
-      print('📋 篩選選項更新: ${areas.length} 個區域, ${specialties.length} 種特色');
-    } catch (e) {
-      print('❌ 更新篩選選項失敗: $e');
-    }
-  }
-  
-  void _performSearch(String query) {
-    if (query.isEmpty && _selectedArea.isEmpty && _selectedSpecialty.isEmpty) {
-      _clearSearch();
-      return;
-    }
-    
-    setState(() {
-      _searchQuery = query;
-      _isSearching = true;
-      _isSearchMode = true;
-    });
-    
-    _filterRestaurants();
-  }
-  
-  void _filterRestaurants() {
-    if (_originalRestaurantList.isEmpty) {
-      _originalRestaurantList = List.from(fullRestaurantList);
-    }
-    
-    List<Map<String, dynamic>> filtered = List.from(_originalRestaurantList);
-    
-    // 文字搜尋
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((restaurant) {
-        final name = restaurant['name']?.toString().toLowerCase() ?? '';
-        final specialty = restaurant['specialty']?.toString().toLowerCase() ?? '';
-        final area = restaurant['area']?.toString().toLowerCase() ?? '';
-        final description = restaurant['description']?.toString().toLowerCase() ?? '';
-        final query = _searchQuery.toLowerCase();
-        
-        return name.contains(query) ||
-               specialty.contains(query) ||
-               area.contains(query) ||
-               description.contains(query);
-      }).toList();
-    }
-    
-    // 區域篩選
-    if (_selectedArea.isNotEmpty) {
-      filtered = filtered.where((restaurant) {
-        final area = restaurant['area']?.toString() ?? '';
-        return area == _selectedArea;
-      }).toList();
-    }
-    
-    // 特色料理篩選
-    if (_selectedSpecialty.isNotEmpty) {
-      filtered = filtered.where((restaurant) {
-        final specialty = restaurant['specialty']?.toString() ?? '';
-        return specialty.contains(_selectedSpecialty);
-      }).toList();
-    }
-    
-    setState(() {
-      _searchResults = filtered;
-      _isSearching = false;
-      currentRoundList = List.from(filtered)..shuffle();
-      round = 1;
-      liked.clear();
-      cardSwiperKey++;
-    });
-    
-    print('🔍 搜尋結果: ${filtered.length} 間餐廳');
-  }
-  
-  void _clearSearch() {
-    setState(() {
-      _searchQuery = '';
-      _selectedArea = '';
-      _selectedSpecialty = '';
-      _isSearchMode = false;
-      _searchResults.clear();
-      currentRoundList = List.from(_originalRestaurantList.isEmpty ? fullRestaurantList : _originalRestaurantList)..shuffle();
-      round = 1;
-      liked.clear();
-      cardSwiperKey++;
-    });
-    
-    _searchController.clear();
-    print('🔍 清除搜尋結果');
-  }
-  
-  void _selectArea(String area) {
-    setState(() {
-      _selectedArea = area;
-    });
-    _filterRestaurants();
-  }
-  
-  void _selectSpecialty(String specialty) {
-    setState(() {
-      _selectedSpecialty = specialty;
-    });
-    _filterRestaurants();
-  }
+
 
   // 新增：用戶 ID 相關方法
   Future<void> _checkAndSetupUserId() async {
@@ -745,7 +596,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     return prefs.getInt(key) ?? 0;
   }
 
-  Future<void> fetchAllRestaurants({double radiusKm = 5, bool onlyShowOpen = true}) async {
+  Future<void> fetchAllRestaurants({double radiusKm = 2, bool onlyShowOpen = true}) async {
     if (!_canSearchToday()) {
       if (mounted) {
         setState(() {
@@ -822,7 +673,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           if(mounted) {
             setState(() {
               fullRestaurantList = cachedRestaurants;
-              _originalRestaurantList = List.from(cachedRestaurants); // 🔍 更新搜尋用的原始列表
               currentRoundList = List.from(cachedRestaurants)..shuffle();
               isLoading = false;
               isSplash = false;
@@ -848,7 +698,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
               setState(() {
                 _loadingText = '顯示快取資料...';
                 fullRestaurantList = List.from(cachedRestaurants);
-                _originalRestaurantList = List.from(cachedRestaurants); // 🔍 更新搜尋用的原始列表
                 currentRoundList = List.from(cachedRestaurants)..shuffle();
                 isLoading = false;
                 isSplash = false;
@@ -892,7 +741,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
           if (mounted) {
             setState(() {
               fullRestaurantList = filteredRestaurants;
-              _originalRestaurantList = List.from(filteredRestaurants); // 🔍 更新搜尋用的原始列表
               currentRoundList = List.from(filteredRestaurants)..shuffle();
               round = 1;
               liked.clear();
@@ -978,7 +826,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
       if (mounted) {
         setState(() {        
           fullRestaurantList = finalList;
-          _originalRestaurantList = List.from(finalList); // 🔍 更新搜尋用的原始列表
           currentRoundList = List.from(finalList)..shuffle();
           round = 1;
           liked.clear();
@@ -1025,7 +872,7 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
 
   Future<List<Map<String, dynamic>>> _fetchFromApi({
     required Position position,
-    double radiusKm = 5,
+    double radiusKm = 2,
     bool onlyShowOpen = true
   }) async {
     if (mounted) {
@@ -1817,9 +1664,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
                             ),
                             child: Slider(
-                              min: 1,
-                              max: 10,
-                              divisions: 9,
+                              min: 2,
+                              max: 5,
+                              divisions: 3,
                               value: searchRadius,
                               onChanged: (value) => setState(() => searchRadius = value),
                               onChangeEnd: (value) {
@@ -1839,8 +1686,6 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
                     ),
                   ),
                   const Divider(height: 1, color: Color(0x11000000)),
-                  // 🔍 搜尋功能 UI
-                  _buildSearchSection(),
                   if (round == 1)
                     Padding(
                       padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -2283,160 +2128,9 @@ class _NearbyFoodSwipePageState extends State<NearbyFoodSwipePage> with TickerPr
     );
   }
 
-  // 🔍 搜尋功能 UI 建構方法
-  Widget _buildSearchSection() {
-    return Column(
-      children: [
-        // 搜尋框
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              _debounceTimer?.cancel();
-              _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-                _performSearch(value);
-              });
-            },
-            decoration: InputDecoration(
-              hintText: '搜尋餐廳、特色料理或區域...',
-              hintStyle: TextStyle(color: Colors.grey[600]),
-              prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
-              suffixIcon: _searchQuery.isNotEmpty || _selectedArea.isNotEmpty || _selectedSpecialty.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.grey),
-                      onPressed: _clearSearch,
-                    )
-                  : null,
-              filled: true,
-              fillColor: Colors.grey[50],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.deepPurple.shade300, width: 2),
-              ),
-            ),
-          ),
-        ),
-        // 快速篩選按鈕
-        if (_availableAreas.isNotEmpty || _availableSpecialties.isNotEmpty)
-          Container(
-            height: 36,
-            margin: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 10),
-                // 區域篩選
-                if (_availableAreas.isNotEmpty)
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildFilterChip('區域', _selectedArea, _availableAreas, _selectArea),
-                          const SizedBox(width: 8),
-                          _buildFilterChip('特色', _selectedSpecialty, _availableSpecialties, _selectSpecialty),
-                        ],
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 10),
-              ],
-            ),
-          ),
-        // 搜尋結果提示
-        if (_isSearchMode && !_isSearching)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                Icon(Icons.search_outlined, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  '搜尋結果：${currentRoundList.length} 間餐廳',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                if (_searchQuery.isNotEmpty || _selectedArea.isNotEmpty || _selectedSpecialty.isNotEmpty)
-                  TextButton(
-                    onPressed: _clearSearch,
-                    child: const Text('清除', style: TextStyle(fontSize: 12)),
-                  ),
-              ],
-            ),
-          ),
-        if (_isSearching)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                SizedBox(width: 8),
-                Text('搜尋中...', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
+
   
-  Widget _buildFilterChip(String label, String selectedValue, List<String> options, Function(String) onSelect) {
-    return PopupMenuButton<String>(
-      onSelected: onSelect,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selectedValue.isNotEmpty ? Colors.deepPurple : Colors.grey[100],
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selectedValue.isNotEmpty ? Colors.deepPurple : Colors.grey[300]!,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              selectedValue.isNotEmpty ? selectedValue : label,
-              style: TextStyle(
-                fontSize: 12,
-                color: selectedValue.isNotEmpty ? Colors.white : Colors.grey[700],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              selectedValue.isNotEmpty ? Icons.check : Icons.arrow_drop_down,
-              size: 16,
-              color: selectedValue.isNotEmpty ? Colors.white : Colors.grey[600],
-            ),
-          ],
-        ),
-      ),
-      itemBuilder: (context) => [
-        if (selectedValue.isNotEmpty)
-          const PopupMenuItem<String>(
-            value: '',
-            child: Text('清除篩選'),
-          ),
-        ...options.map((option) => PopupMenuItem<String>(
-          value: option,
-          child: Text(option),
-        )),
-      ],
-    );
-  }
+
 
   Widget _buildRound3GridView() {
     return Stack(
